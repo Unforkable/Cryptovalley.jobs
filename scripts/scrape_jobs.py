@@ -18,6 +18,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timezone
 from html import unescape
 from pathlib import Path
 
@@ -258,7 +259,8 @@ def insert_job(job: dict, company_id: str) -> None:
         "apply_url": job["apply_url"],
         "salary_currency": "CHF",
         "tags": [],
-        "status": "pending",
+        "status": "active",
+        "published_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
 
 
