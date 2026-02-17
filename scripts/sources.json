@@ -1,0 +1,22 @@
+[
+  {"company": "DFINITY", "url": "https://boards.greenhouse.io/dfinity/", "type": "greenhouse", "board": "dfinity", "website": "https://dfinity.org"},
+  {"company": "NEAR Foundation", "url": "https://boards.eu.greenhouse.io/nearfoundation", "type": "greenhouse", "board": "nearfoundation", "website": "https://near.org"},
+
+  {"company": "SwissBorg", "url": "https://jobs.lever.co/swissborg", "type": "lever", "board": "swissborg", "website": "https://swissborg.com"},
+  {"company": "Swissblock", "url": "https://jobs.lever.co/swissblock", "type": "lever", "board": "swissblock", "website": "https://swissblock.net"},
+
+  {"company": "Amina Bank", "url": "https://aminagroup.com/careers/", "type": "generic", "website": "https://aminagroup.com"},
+  {"company": "Bitcoin Suisse", "url": "https://bitcoin-suisse.onlyfy.jobs/", "type": "generic", "website": "https://bitcoinsuisse.com"},
+  {"company": "DCAP", "url": "https://www.dcap.ch/#career", "type": "generic", "website": "https://www.dcap.ch"},
+  {"company": "Mathrix", "url": "https://mathrix.recruitee.com/", "type": "generic", "website": "https://mathrix.io"},
+  {"company": "OKOIOS", "url": "https://www.okoios.ch/careers", "type": "generic", "website": "https://www.okoios.ch"},
+  {"company": "Taurus SA", "url": "https://join.com/companies/taurusgroup", "type": "generic", "website": "https://taurus.ch"},
+  {"company": "Crypto Finance", "url": "https://www.crypto-finance.com/career/", "type": "generic", "website": "https://www.crypto-finance.com"},
+  {"company": "Ripple", "url": "https://ripple.com/careers/all-jobs/?location=Geneva%2C+Switzerland&location=Lausanne%2C+Vaud%2C+Switzerland", "type": "generic", "website": "https://ripple.com"},
+  {"company": "Solana Foundation", "url": "https://jobs.solana.com/jobs", "type": "generic", "website": "https://solana.com"},
+  {"company": "Tezos Foundation", "url": "https://careers.tezos.com/companies/tezos-foundation-2", "type": "generic", "website": "https://tezos.foundation"},
+
+  {"company": "Notabene", "url": "https://www.linkedin.com/company/notabene-id/jobs/", "type": "linkedin", "website": "https://notabene.id"},
+  {"company": "Wyden", "url": "https://www.linkedin.com/company/wyden-io/jobs/", "type": "linkedin", "website": "https://wyden.io"},
+  {"company": "Auditchain Labs", "url": "https://www.linkedin.com/company/auditchain/jobs/", "type": "linkedin", "website": null}
+]
