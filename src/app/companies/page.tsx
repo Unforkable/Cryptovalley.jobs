@@ -12,8 +12,8 @@ export default async function CompaniesPage() {
   const companies = await getAllCompanies();
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Companies</h1>
+    <div className="mx-auto max-w-6xl px-4 py-16">
+      <h1 className="text-3xl font-extrabold tracking-tight">Companies</h1>
       <p className="mt-2 text-muted-foreground">
         Explore crypto and blockchain companies hiring in Switzerland.
       </p>

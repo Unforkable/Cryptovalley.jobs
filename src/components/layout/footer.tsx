@@ -3,11 +3,11 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="border-t bg-muted/30">
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="flex flex-col gap-8 sm:flex-row sm:justify-between">
           <div>
-            <Link href="/" className="text-lg font-bold tracking-tight">
-              CryptoValley<span className="text-muted-foreground">.jobs</span>
+            <Link href="/" className="text-lg font-extrabold tracking-tight">
+              <span className="text-primary">Crypto</span>Valley<span className="text-muted-foreground">.jobs</span>
             </Link>
             <p className="mt-2 max-w-xs text-sm text-muted-foreground">
               The job board for blockchain and crypto companies in

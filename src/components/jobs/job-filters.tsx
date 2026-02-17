@@ -42,7 +42,7 @@ export function JobFilters({
   const hasFilters = jobType || locationType || tag;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/60 p-3">
       <Select
         value={jobType ?? "all"}
         onValueChange={(v) => updateFilter("job_type", v === "all" ? undefined : v)}

@@ -9,7 +9,7 @@ export function CompanyCard({ company }: { company: Company }) {
 
   return (
     <Link href={`/companies/${company.slug}`}>
-      <Card className="h-full py-4 transition-colors hover:border-foreground/20">
+      <Card className="h-full rounded-xl py-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
         <CardContent className="flex flex-col items-center text-center">
           <Avatar size="lg" className="mb-3">
             {company.logo_url && (

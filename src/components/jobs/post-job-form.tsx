@@ -23,6 +23,7 @@ export function PostJobForm({ companies }: { companies: Company[] }) {
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [companyMode, setCompanyMode] = useState<"existing" | "new">("existing");
 
   function addTag(value: string) {
     const tag = value.trim().toLowerCase();
@@ -110,21 +111,72 @@ export function PostJobForm({ companies }: { companies: Company[] }) {
       {/* Company */}
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Company</h2>
-        <div className="space-y-2">
-          <Label>Company *</Label>
-          <Select name="company_id" required>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a company" />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <input type="hidden" name="company_mode" value={companyMode} />
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant={companyMode === "existing" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCompanyMode("existing")}
+          >
+            Select existing
+          </Button>
+          <Button
+            type="button"
+            variant={companyMode === "new" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCompanyMode("new")}
+          >
+            New company
+          </Button>
         </div>
+
+        {companyMode === "existing" ? (
+          <div className="space-y-2">
+            <Label>Company *</Label>
+            <Select name="company_id" required>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a company" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="company_name">Company Name *</Label>
+              <Input
+                id="company_name"
+                name="company_name"
+                placeholder="e.g. Ethereum Foundation"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company_website">Website</Label>
+              <Input
+                id="company_website"
+                name="company_website"
+                type="url"
+                placeholder="https://yourcompany.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company_location">Location</Label>
+              <Input
+                id="company_location"
+                name="company_location"
+                placeholder="e.g. Zug, Switzerland"
+              />
+            </div>
+          </div>
+        )}
       </section>
 
       <Separator />

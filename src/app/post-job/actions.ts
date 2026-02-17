@@ -21,7 +21,6 @@ export async function createJob(formData: FormData): Promise<{ checkoutUrl: stri
   const job_type = formData.get("job_type") as string;
   const location_type = formData.get("location_type") as string;
   const location = (formData.get("location") as string) || null;
-  const company_id = formData.get("company_id") as string;
   const apply_url = formData.get("apply_url") as string;
   const salary_min = formData.get("salary_min")
     ? Number(formData.get("salary_min"))
@@ -35,11 +34,39 @@ export async function createJob(formData: FormData): Promise<{ checkoutUrl: stri
     .map((t) => t.trim().toLowerCase())
     .filter(Boolean);
 
+  const company_mode = formData.get("company_mode") as string;
+
+  const supabase = createServiceClient();
+
+  let company_id: string;
+
+  if (company_mode === "new") {
+    const company_name = formData.get("company_name") as string;
+    const company_website = (formData.get("company_website") as string) || null;
+    const company_location = (formData.get("company_location") as string) || null;
+
+    if (!company_name) throw new Error("Company name is required");
+
+    const { data: company, error: companyError } = await supabase
+      .from("companies")
+      .insert({
+        name: company_name,
+        slug: slugify(company_name),
+        website: company_website,
+        location: company_location,
+      })
+      .select("id")
+      .single();
+
+    if (companyError || !company) throw new Error(companyError?.message || "Failed to create company");
+    company_id = company.id;
+  } else {
+    company_id = formData.get("company_id") as string;
+  }
+
   if (!title || !description || !job_type || !location_type || !company_id || !apply_url) {
     throw new Error("Missing required fields");
   }
-
-  const supabase = createServiceClient();
 
   // 1. Insert job as draft (not visible until payment completes)
   const { data: job, error: jobError } = await supabase

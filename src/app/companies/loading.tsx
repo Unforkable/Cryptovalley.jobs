@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function CompanyCardSkeleton() {
   return (
-    <div className="rounded-xl border p-6">
+    <div className="rounded-xl border bg-card p-6 shadow-sm">
       <div className="flex flex-col items-center text-center">
         <Skeleton className="size-10 rounded-full" />
         <Skeleton className="mt-3 h-5 w-28" />
@@ -15,7 +15,7 @@ function CompanyCardSkeleton() {
 
 export default function CompaniesLoading() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-16">
       <Skeleton className="h-9 w-40" />
       <Skeleton className="mt-2 h-5 w-72" />
 

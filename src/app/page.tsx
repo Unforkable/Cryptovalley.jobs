@@ -40,30 +40,30 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
       {/* Hero */}
-      <section className="border-b bg-gradient-to-b from-primary/5 to-background py-16 sm:py-24">
+      <section className="border-b bg-gradient-to-b from-primary/5 via-primary/[0.02] to-background py-20 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl lg:text-6xl">
             Blockchain & Crypto Jobs
             <br />
-            <span className="text-primary/70">in Crypto Valley</span>
+            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">in Crypto Valley</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             Find your next role at the leading blockchain companies in
             Switzerland. From DeFi to infrastructure, Web3 to tokenization.
           </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
-            <Button asChild size="lg">
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <Button asChild size="lg" className="rounded-xl px-8 shadow-md">
               <Link href="/jobs">Browse Jobs</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="rounded-xl px-8">
               <Link href="/post-job">Post a Job</Link>
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="mx-auto mt-10 flex items-center justify-center gap-8 text-sm text-muted-foreground">
+          <div className="mx-auto mt-12 flex items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Briefcase className="size-4" />
+              <Briefcase className="size-4 text-primary/60" />
               <span>
                 <span className="font-semibold text-foreground">
                   {stats.jobs}
@@ -72,7 +72,7 @@ export default async function HomePage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Building2 className="size-4" />
+              <Building2 className="size-4 text-primary/60" />
               <span>
                 <span className="font-semibold text-foreground">
                   {stats.companies}
@@ -85,9 +85,9 @@ export default async function HomePage() {
       </section>
 
       {/* Latest Jobs */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Latest Jobs</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Latest Jobs</h2>
           <Link
             href="/jobs"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -97,7 +97,7 @@ export default async function HomePage() {
           </Link>
         </div>
         {jobs.length > 0 ? (
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-6 flex flex-col gap-4">
             {jobs.map((job) => (
               <JobCard key={job.id} job={job} />
             ))}
@@ -113,9 +113,9 @@ export default async function HomePage() {
       </section>
 
       {/* Email Subscribe */}
-      <section className="border-t bg-muted/30">
-        <div className="mx-auto max-w-2xl px-4 py-12 text-center sm:py-16">
-          <h2 className="text-2xl font-bold">Get Job Alerts</h2>
+      <section className="border-t bg-muted/40">
+        <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:py-20">
+          <h2 className="text-2xl font-bold tracking-tight">Get Job Alerts</h2>
           <p className="mt-2 text-muted-foreground">
             New crypto jobs in Switzerland, delivered to your inbox.
           </p>

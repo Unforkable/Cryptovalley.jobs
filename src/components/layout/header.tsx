@@ -27,8 +27,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          CryptoValley<span className="text-muted-foreground">.jobs</span>
+        <Link href="/" className="text-lg font-extrabold tracking-tight">
+          <span className="text-primary">Crypto</span>Valley<span className="text-muted-foreground">.jobs</span>
         </Link>
 
         {/* Desktop nav */}
@@ -47,7 +47,7 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          <Button asChild size="sm" className="ml-2">
+          <Button asChild size="sm" className="ml-2 rounded-lg shadow-sm">
             <Link href="/post-job">Post a Job</Link>
           </Button>
         </nav>
@@ -66,7 +66,7 @@ export function Header() {
           <SheetContent side="right" className="w-72">
             <SheetHeader>
               <SheetTitle>
-                CryptoValley<span className="text-muted-foreground">.jobs</span>
+                <span className="text-primary">Crypto</span>Valley<span className="text-muted-foreground">.jobs</span>
               </SheetTitle>
               <SheetDescription className="sr-only">
                 Navigation menu

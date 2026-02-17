@@ -195,7 +195,7 @@ export default async function JobDetailPage({
   const jsonLd = buildJobPostingSchema(job);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div className="mx-auto max-w-4xl px-4 py-16 pb-24 lg:pb-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -211,7 +211,7 @@ export default async function JobDetailPage({
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          <h1 className="text-3xl font-bold">{job.title}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{job.title}</h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="gap-1">
@@ -267,7 +267,7 @@ export default async function JobDetailPage({
 
         {/* Sidebar */}
         <aside>
-          <Card>
+          <Card className="sticky top-20 rounded-xl shadow-sm">
             <CardContent className="flex flex-col items-center text-center">
               <Avatar size="lg" className="mb-3">
                 {company?.logo_url && (
@@ -280,7 +280,7 @@ export default async function JobDetailPage({
                 <>
                   <Link
                     href={`/companies/${company.slug}`}
-                    className="font-semibold hover:underline"
+                    className="font-semibold hover:text-primary hover:underline"
                   >
                     {company.name}
                   </Link>
@@ -306,17 +306,26 @@ export default async function JobDetailPage({
 
               <Separator className="my-4" />
 
-              <Button asChild className="w-full">
+              <Button asChild className="hidden w-full rounded-xl lg:inline-flex">
                 <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
                   Apply Now
                 </a>
               </Button>
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 hidden text-xs text-muted-foreground lg:block">
                 You&apos;ll apply on the company&apos;s website
               </p>
             </CardContent>
           </Card>
         </aside>
+      </div>
+
+      {/* Sticky mobile apply button */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 p-3 backdrop-blur lg:hidden">
+        <Button asChild size="lg" className="w-full rounded-xl shadow-md">
+          <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+            Apply Now
+          </a>
+        </Button>
       </div>
     </div>
   );

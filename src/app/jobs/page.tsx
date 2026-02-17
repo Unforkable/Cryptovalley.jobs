@@ -43,25 +43,25 @@ export default async function JobsPage({
     : "/jobs";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold">All Jobs</h1>
+    <div className="mx-auto max-w-6xl px-4 py-16">
+      <h1 className="text-3xl font-extrabold tracking-tight">All Jobs</h1>
       <p className="mt-2 text-muted-foreground">
         Browse open positions from top crypto companies in Switzerland.
       </p>
 
-      <div className="mt-6">
+      <div className="mt-8">
         <Suspense>
           <JobFilters jobType={job_type} locationType={location_type} tag={tag} />
         </Suspense>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-8">
         <p className="text-sm text-muted-foreground">
           {total} {total === 1 ? "job" : "jobs"} found
         </p>
         {jobs.length > 0 ? (
           <>
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="mt-4 flex flex-col gap-4">
               {jobs.map((job) => (
                 <JobCard key={job.id} job={job} />
               ))}

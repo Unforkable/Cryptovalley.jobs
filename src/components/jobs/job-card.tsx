@@ -30,7 +30,7 @@ export function JobCard({ job }: { job: Job }) {
   return (
     <Card
       className={cn(
-        "py-4 transition-colors hover:border-foreground/20",
+        "rounded-xl py-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20",
         job.featured && "border-l-2 border-l-amber-400 bg-amber-50/30"
       )}
     >
@@ -58,7 +58,7 @@ export function JobCard({ job }: { job: Job }) {
               )}
               <Link
                 href={`/jobs/${job.slug}`}
-                className="font-semibold hover:underline"
+                className="text-base font-semibold tracking-tight hover:text-primary hover:underline"
               >
                 {job.title}
               </Link>
