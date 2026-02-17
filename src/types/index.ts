@@ -36,6 +36,19 @@ export interface Job {
   company?: Company;
 }
 
+export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
+
+export interface Payment {
+  id: string;
+  job_id: string | null;
+  stripe_session_id: string;
+  stripe_payment_intent_id: string | null;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  created_at: string;
+}
+
 export interface EmailSubscription {
   id: string;
   email: string;

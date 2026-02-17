@@ -1,8 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createCheckoutSession } from "@/lib/stripe";
 
 function slugify(text: string): string {
   return (
@@ -15,7 +15,7 @@ function slugify(text: string): string {
   );
 }
 
-export async function createJob(formData: FormData) {
+export async function createJob(formData: FormData): Promise<{ checkoutUrl: string }> {
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const job_type = formData.get("job_type") as string;
@@ -41,24 +41,47 @@ export async function createJob(formData: FormData) {
 
   const supabase = createServiceClient();
 
-  const { error } = await supabase.from("jobs").insert({
-    title,
-    slug: slugify(title),
-    description,
-    job_type,
-    location_type,
-    location,
-    company_id,
-    apply_url,
-    salary_min,
-    salary_max,
-    salary_currency: "CHF",
-    tags,
+  // 1. Insert job as draft (not visible until payment completes)
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .insert({
+      title,
+      slug: slugify(title),
+      description,
+      job_type,
+      location_type,
+      location,
+      company_id,
+      apply_url,
+      salary_min,
+      salary_max,
+      salary_currency: "CHF",
+      tags,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+
+  if (jobError || !job) throw new Error(jobError?.message || "Failed to create job");
+
+  // 2. Create Stripe checkout session with job_id in metadata
+  const session = await createCheckoutSession({
+    jobId: job.id,
+    jobTitle: title,
+  });
+
+  // 3. Create payment record linked to the session
+  const { error: paymentError } = await supabase.from("payments").insert({
+    job_id: job.id,
+    stripe_session_id: session.id,
+    amount: 29900,
+    currency: "chf",
     status: "pending",
   });
 
-  if (error) throw new Error(error.message);
+  if (paymentError) throw new Error(paymentError.message);
 
   revalidatePath("/admin");
-  redirect("/post-job/success");
+
+  return { checkoutUrl: session.url! };
 }

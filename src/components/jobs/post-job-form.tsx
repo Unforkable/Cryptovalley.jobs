@@ -41,7 +41,8 @@ export function PostJobForm({ companies }: { companies: Company[] }) {
     setError("");
     formData.set("tags", tags.join(","));
     try {
-      await createJob(formData);
+      const { checkoutUrl } = await createJob(formData);
+      window.location.href = checkoutUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -232,10 +233,10 @@ export function PostJobForm({ companies }: { companies: Company[] }) {
 
       <Button type="submit" size="lg" disabled={loading} className="w-full">
         {loading && <Loader2 className="size-4 animate-spin" />}
-        Submit for Review
+        Proceed to Payment — CHF 299
       </Button>
       <p className="text-center text-sm text-muted-foreground">
-        Your listing will be reviewed before going live.
+        You&apos;ll be redirected to Stripe to complete payment. Your listing will be reviewed after payment.
       </p>
     </form>
   );
