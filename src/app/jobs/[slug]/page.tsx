@@ -8,6 +8,51 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getJobBySlug } from "@/lib/supabase/queries";
+import { sanitizeHtml, containsHtml } from "@/lib/sanitize-html";
+
+const EMPTY_DESCRIPTIONS = new Set([
+  "See job posting for details.",
+  "See job posting for details",
+  "",
+]);
+
+function JobDescription({ description, applyUrl }: { description: string; applyUrl: string }) {
+  const isEmpty = EMPTY_DESCRIPTIONS.has(description.trim());
+
+  if (isEmpty) {
+    return (
+      <div className="rounded-lg border border-dashed p-6 text-center">
+        <p className="text-muted-foreground">
+          Full job description is available on the company&apos;s website.
+        </p>
+        <a
+          href={applyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+        >
+          View full description & apply
+          <ExternalLink className="size-3" />
+        </a>
+      </div>
+    );
+  }
+
+  if (containsHtml(description)) {
+    return (
+      <div
+        className="prose prose-sm max-w-none prose-headings:font-semibold prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
+      />
+    );
+  }
+
+  return (
+    <div className="max-w-none whitespace-pre-wrap text-sm leading-relaxed">
+      {description}
+    </div>
+  );
+}
 
 function formatSalary(min: number | null, max: number | null, currency: string) {
   if (!min && !max) return null;
@@ -90,9 +135,7 @@ export default async function JobDetailPage({
 
           <Separator className="my-6" />
 
-          <div className="max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-            {job.description}
-          </div>
+          <JobDescription description={job.description} applyUrl={job.apply_url} />
 
           {job.tags.length > 0 && (
             <>

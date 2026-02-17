@@ -122,7 +122,7 @@ async def fetch_greenhouse(client: httpx.AsyncClient, source: dict) -> list[dict
         jobs.append({
             "title": j["title"],
             "location": loc.get("name") if loc else None,
-            "description": strip_html(j.get("content", ""))[:2000],
+            "description": (j.get("content") or "")[:5000],
             "apply_url": j.get("absolute_url", ""),
         })
     return jobs
@@ -160,7 +160,7 @@ async def fetch_ashby(client: httpx.AsyncClient, source: dict) -> list[dict]:
         jobs.append({
             "title": j.get("title", ""),
             "location": j.get("location", ""),
-            "description": strip_html(j.get("descriptionHtml", ""))[:2000] if j.get("descriptionHtml") else "",
+            "description": (j.get("descriptionHtml") or "")[:5000],
             "apply_url": j.get("jobUrl", j.get("applyUrl", "")),
         })
     return jobs
@@ -246,7 +246,7 @@ def insert_job(job: dict, company_id: str) -> None:
     supabase.table("jobs").insert({
         "title": job["title"],
         "slug": slugify(job["title"]),
-        "description": (job.get("description") or "See job posting for details.")[:5000],
+        "description": (job.get("description") or "See job posting for details.")[:10000],
         "company_id": company_id,
         "job_type": normalize_job_type(
             job.get("job_type") or job.get("job_type_hint")
