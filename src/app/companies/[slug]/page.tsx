@@ -7,6 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { JobCard } from "@/components/jobs/job-card";
 import { getCompanyBySlug, getJobsByCompany } from "@/lib/supabase/queries";
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://cryptovalley.jobs";
+
 export async function generateMetadata({
   params,
 }: {
@@ -15,11 +17,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const company = await getCompanyBySlug(slug);
   if (!company) return { title: "Company Not Found" };
+
+  const description =
+    company.description?.slice(0, 155).trimEnd() ??
+    `View ${company.name}'s profile and open positions in Crypto Valley.`;
+  const url = `${BASE_URL}/companies/${company.slug}`;
+
   return {
     title: company.name,
-    description:
-      company.description?.slice(0, 160) ??
-      `View ${company.name}'s profile and open positions.`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${company.name} - Jobs & Company Profile | CryptoValley.jobs`,
+      description,
+      url,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: company.name,
+      description,
+    },
   };
 }
 

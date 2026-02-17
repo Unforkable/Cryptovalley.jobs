@@ -9,6 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getJobBySlug } from "@/lib/supabase/queries";
 import { sanitizeHtml, containsHtml } from "@/lib/sanitize-html";
+import type { Job } from "@/types";
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://cryptovalley.jobs";
 
 const EMPTY_DESCRIPTIONS = new Set([
   "See job posting for details.",
@@ -62,6 +65,83 @@ function formatSalary(min: number | null, max: number | null, currency: string) 
   return `Up to ${currency} ${fmt(max!)}`;
 }
 
+const EMPLOYMENT_TYPE_MAP: Record<string, string> = {
+  "full-time": "FULL_TIME",
+  "part-time": "PART_TIME",
+  contract: "CONTRACTOR",
+  internship: "INTERN",
+};
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function buildJobPostingSchema(job: Job) {
+  const description = containsHtml(job.description)
+    ? stripHtml(job.description)
+    : job.description;
+
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description,
+    url: `${BASE_URL}/jobs/${job.slug}`,
+    employmentType: EMPLOYMENT_TYPE_MAP[job.job_type] ?? "OTHER",
+    directApply: false,
+  };
+
+  if (job.published_at) schema.datePosted = job.published_at;
+  if (job.expires_at) schema.validThrough = job.expires_at;
+
+  if (job.company) {
+    const org: Record<string, unknown> = {
+      "@type": "Organization",
+      name: job.company.name,
+      sameAs: job.company.website ?? undefined,
+    };
+    if (job.company.logo_url) org.logo = job.company.logo_url;
+    schema.hiringOrganization = org;
+  }
+
+  if (job.location) {
+    schema.jobLocation = {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.location,
+        addressCountry: "CH",
+      },
+    };
+  }
+
+  if (job.location_type === "remote") {
+    schema.jobLocationType = "TELECOMMUTE";
+  }
+
+  if (job.salary_min || job.salary_max) {
+    const value: Record<string, unknown> = {
+      "@type": "QuantitativeValue",
+      unitText: "YEAR",
+    };
+    if (job.salary_min && job.salary_max) {
+      value.minValue = job.salary_min;
+      value.maxValue = job.salary_max;
+    } else if (job.salary_min) {
+      value.value = job.salary_min;
+    } else {
+      value.value = job.salary_max;
+    }
+    schema.baseSalary = {
+      "@type": "MonetaryAmount",
+      currency: job.salary_currency,
+      value,
+    };
+  }
+
+  return schema;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -70,9 +150,32 @@ export async function generateMetadata({
   const { slug } = await params;
   const job = await getJobBySlug(slug);
   if (!job) return { title: "Job Not Found" };
+
+  const companyName = job.company?.name ?? "Unknown";
+  const title = `${job.title} at ${companyName}`;
+  const rawDesc = containsHtml(job.description)
+    ? stripHtml(job.description)
+    : job.description;
+  const description = rawDesc.length > 155
+    ? rawDesc.slice(0, 155).trimEnd() + "..."
+    : rawDesc;
+  const url = `${BASE_URL}/jobs/${job.slug}`;
+
   return {
-    title: `${job.title} at ${job.company?.name ?? "Unknown"}`,
-    description: job.description.slice(0, 160),
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${job.title} in ${job.location ?? "Switzerland"} | ${companyName} | Apply Now`,
+      description,
+      url,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 
@@ -89,8 +192,14 @@ export default async function JobDetailPage({
   const company = job.company;
   const initials = company?.name?.slice(0, 2).toUpperCase() ?? "??";
 
+  const jsonLd = buildJobPostingSchema(job);
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link
         href="/jobs"
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

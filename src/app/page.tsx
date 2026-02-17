@@ -1,9 +1,31 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Briefcase, Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/jobs/job-card";
 import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
 import { getLatestJobs, getPublicStats } from "@/lib/supabase/queries";
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://cryptovalley.jobs";
+
+export const metadata: Metadata = {
+  alternates: { canonical: BASE_URL },
+  openGraph: {
+    title: "CryptoValley.jobs - Blockchain & Crypto Jobs in Switzerland",
+    description:
+      "Find the best blockchain, crypto, and Web3 jobs in Switzerland's Crypto Valley. Browse opportunities from top companies in Zug, Zurich, and beyond.",
+    url: BASE_URL,
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "CryptoValley.jobs",
+  url: BASE_URL,
+  description:
+    "Job board for blockchain and crypto companies in Switzerland's Crypto Valley.",
+};
 
 export default async function HomePage() {
   const [jobs, stats] = await Promise.all([
@@ -13,6 +35,10 @@ export default async function HomePage() {
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-primary/5 to-background py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 text-center">
