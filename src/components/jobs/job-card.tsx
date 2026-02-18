@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Briefcase } from "lucide-react";
+import { MapPin, Briefcase, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,7 +31,7 @@ export function JobCard({ job }: { job: Job }) {
     <Card
       className={cn(
         "rounded-xl py-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20",
-        job.featured && "border-l-2 border-l-amber-400 bg-amber-50/30"
+        job.featured && "border-l-4 border-l-primary bg-primary/[0.03] ring-1 ring-primary/10"
       )}
     >
       <CardContent className="flex gap-4">
@@ -63,11 +63,19 @@ export function JobCard({ job }: { job: Job }) {
                 {job.title}
               </Link>
             </div>
-            {job.published_at && (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {timeAgo(job.published_at)}
-              </span>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {job.featured && (
+                <Badge className="gap-1 bg-primary/10 text-primary border-primary/20">
+                  <Star className="size-3 fill-primary" />
+                  Featured
+                </Badge>
+              )}
+              {job.published_at && (
+                <span className="text-xs text-muted-foreground">
+                  {timeAgo(job.published_at)}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -81,11 +89,6 @@ export function JobCard({ job }: { job: Job }) {
             </Badge>
             {salary && (
               <Badge variant="secondary">{salary}</Badge>
-            )}
-            {job.featured && (
-              <Badge className="bg-amber-500/15 text-amber-700 border-amber-200">
-                Featured
-              </Badge>
             )}
           </div>
 

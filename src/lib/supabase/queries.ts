@@ -9,6 +9,7 @@ export async function getLatestJobs(limit = 6): Promise<Job[]> {
   const { data } = await supabase
     .from("jobs")
     .select("*, company:companies(*)")
+    .order("featured", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(limit);
   return (data as Job[]) ?? [];
@@ -30,6 +31,7 @@ export async function getActiveJobs(filters?: {
   let query = supabase
     .from("jobs")
     .select("*, company:companies(*)", { count: "exact" })
+    .order("featured", { ascending: false })
     .order("published_at", { ascending: false })
     .range(from, to);
 
@@ -89,6 +91,7 @@ export async function getJobsByCompany(companyId: string): Promise<Job[]> {
     .from("jobs")
     .select("*, company:companies(*)")
     .eq("company_id", companyId)
+    .order("featured", { ascending: false })
     .order("published_at", { ascending: false });
   return (data as Job[]) ?? [];
 }
