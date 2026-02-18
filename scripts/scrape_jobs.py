@@ -36,10 +36,13 @@ log = logging.getLogger("scraper")
 SCRIPT_DIR = Path(__file__).parent
 SOURCES = json.loads((SCRIPT_DIR / "sources.json").read_text())
 
-supabase = create_client(
-    os.environ["NEXT_PUBLIC_SUPABASE_URL"],
-    os.environ["SUPABASE_SERVICE_ROLE_KEY"],
-)
+_url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
+_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+if not _url or not _key:
+    missing = [v for v, val in [("NEXT_PUBLIC_SUPABASE_URL", _url), ("SUPABASE_SERVICE_ROLE_KEY", _key)] if not val]
+    sys.exit(f"ERROR: Missing required env vars: {', '.join(missing)}. Add them as GitHub Actions secrets.")
+
+supabase = create_client(_url, _key)
 
 
 # ── Helpers ─────────────────────────────────────────────────────────

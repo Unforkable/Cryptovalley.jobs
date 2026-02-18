@@ -23,7 +23,9 @@ jobs:
         run: pip install -r scripts/requirements.txt
 
       - name: Install browser for crawl4ai
-        run: python -m crawl4ai.install
+        run: |
+          playwright install chromium --with-deps
+          python -m crawl4ai.install
 
       - name: Run scraper
         env:
