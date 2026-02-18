@@ -81,7 +81,7 @@ create policy "Public can view companies" on public.companies
   for select using (true);
 
 create policy "Public can view active jobs" on public.jobs
-  for select using (status = 'active');
+  for select using (status in ('active', 'expired'));
 
 -- Service role has full access (for admin operations via API routes)
 -- Note: Supabase service role key bypasses RLS by default

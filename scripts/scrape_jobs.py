@@ -18,7 +18,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html import unescape
 from pathlib import Path
 
@@ -246,11 +246,38 @@ def get_or_create_company(name: str, website: str | None = None) -> dict:
     return result.data[0]
 
 
+EXPIRY_DAYS = 30
+
+
+def expire_stale_jobs() -> int:
+    """Mark active jobs past their expires_at as expired. Returns count."""
+    now = datetime.now(timezone.utc).isoformat()
+    result = (
+        supabase.table("jobs")
+        .update({"status": "expired"})
+        .eq("status", "active")
+        .lt("expires_at", now)
+        .execute()
+    )
+    return len(result.data) if result.data else 0
+
+
+def refresh_job(apply_url: str) -> None:
+    """Bump an existing job's freshness and reset its expiry clock."""
+    now = datetime.now(timezone.utc)
+    supabase.table("jobs").update({
+        "published_at": now.isoformat(),
+        "expires_at": (now + timedelta(days=EXPIRY_DAYS)).isoformat(),
+        "status": "active",
+    }).eq("apply_url", apply_url).execute()
+
+
 def insert_job(job: dict, company_id: str) -> None:
+    now = datetime.now(timezone.utc)
     supabase.table("jobs").insert({
         "title": job["title"],
         "slug": slugify(job["title"]),
-        "description": (job.get("description") or "See job posting for details.")[:10000],
+        "description": (job.get("description") or "")[:10000],
         "company_id": company_id,
         "job_type": normalize_job_type(
             job.get("job_type") or job.get("job_type_hint")
@@ -263,7 +290,8 @@ def insert_job(job: dict, company_id: str) -> None:
         "salary_currency": "CHF",
         "tags": [],
         "status": "active",
-        "published_at": datetime.now(timezone.utc).isoformat(),
+        "published_at": now.isoformat(),
+        "expires_at": (now + timedelta(days=EXPIRY_DAYS)).isoformat(),
     }).execute()
 
 
@@ -280,6 +308,12 @@ async def main():
     dry_run = "--dry-run" in sys.argv
     if dry_run:
         log.info("DRY RUN — no database writes")
+
+    # Expire stale jobs (active but past their expires_at)
+    if not dry_run:
+        expired_count = expire_stale_jobs()
+        if expired_count:
+            log.info(f"Expired {expired_count} stale jobs")
 
     existing_urls = get_existing_apply_urls()
     log.info(f"Found {len(existing_urls)} existing jobs in database")
@@ -323,6 +357,7 @@ async def main():
                         continue
 
                     new_count = 0
+                    refreshed_count = 0
                     for job in jobs:
                         apply_url = job.get("apply_url")
                         if not apply_url:
@@ -331,6 +366,10 @@ async def main():
                             job["apply_url"] = apply_url
 
                         if apply_url in existing_urls:
+                            # Job still on career page — refresh it
+                            if not dry_run:
+                                refresh_job(apply_url)
+                            refreshed_count += 1
                             continue
 
                         if not is_swiss_or_remote(job):
@@ -350,7 +389,8 @@ async def main():
 
                     log.info(
                         f"{'[OK]':>6} {company_name}: "
-                        f"{len(jobs)} found, {new_count} new"
+                        f"{len(jobs)} found, {new_count} new, "
+                        f"{refreshed_count} refreshed"
                     )
 
                 except Exception as e:
