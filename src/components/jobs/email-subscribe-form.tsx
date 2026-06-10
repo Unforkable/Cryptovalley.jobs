@@ -14,7 +14,7 @@ export function EmailSubscribeForm({
 }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -28,13 +28,15 @@ export function EmailSubscribeForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      const data = await res.json();
 
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "Failed to subscribe");
       }
 
-      setSuccess(true);
+      setSuccess(
+        data.message || "You're subscribed! We'll notify you of new jobs."
+      );
       setEmail("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -46,9 +48,7 @@ export function EmailSubscribeForm({
   if (success) {
     return (
       <div className={className}>
-        <p className="text-sm font-medium text-green-600">
-          You&apos;re subscribed! We&apos;ll notify you of new jobs.
-        </p>
+        <p className="text-sm font-medium text-green-600">{success}</p>
       </div>
     );
   }

@@ -35,6 +35,7 @@ create table public.jobs (
   featured boolean default false not null,
   published_at timestamptz,
   expires_at timestamptz,
+  alerted_at timestamptz, -- set once the job has been emailed to alert subscribers
   created_at timestamptz default now() not null
 );
 
