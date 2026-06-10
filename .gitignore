@@ -46,3 +46,6 @@ next-env.d.ts
 # local screenshots / browser automation artifacts
 /*.png
 /.playwright-mcp/
+
+# python
+__pycache__/
