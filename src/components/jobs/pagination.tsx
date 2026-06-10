@@ -41,6 +41,7 @@ export function Pagination({
         className="size-8"
         asChild={currentPage > 1}
         disabled={currentPage <= 1}
+        aria-label="Previous page"
       >
         {currentPage > 1 ? (
           <Link href={pageHref(currentPage - 1)}>
@@ -70,9 +71,11 @@ export function Pagination({
             asChild={page !== currentPage}
           >
             {page === currentPage ? (
-              <span>{page}</span>
+              <span aria-current="page">{page}</span>
             ) : (
-              <Link href={pageHref(page)}>{page}</Link>
+              <Link href={pageHref(page)} aria-label={`Page ${page}`}>
+                {page}
+              </Link>
             )}
           </Button>
         )
@@ -84,6 +87,7 @@ export function Pagination({
         className="size-8"
         asChild={currentPage < totalPages}
         disabled={currentPage >= totalPages}
+        aria-label="Next page"
       >
         {currentPage < totalPages ? (
           <Link href={pageHref(currentPage + 1)}>

@@ -2,14 +2,25 @@ import type { Metadata } from "next";
 import { getAllCompanies } from "@/lib/supabase/queries";
 import { CompanyCard } from "@/components/companies/company-card";
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://cryptovalley.jobs";
+
 export const metadata: Metadata = {
   title: "Companies",
   description:
     "Explore blockchain and crypto companies hiring in Switzerland's Crypto Valley.",
+  alternates: { canonical: `${BASE_URL}/companies` },
+  openGraph: {
+    title: "Crypto & Blockchain Companies in Switzerland | CryptoValley.jobs",
+    description:
+      "Explore blockchain and crypto companies hiring in Switzerland's Crypto Valley.",
+    url: `${BASE_URL}/companies`,
+  },
 };
 
 export default async function CompaniesPage() {
-  const companies = await getAllCompanies();
+  const companies = (await getAllCompanies()).sort(
+    (a, b) => b.job_count - a.job_count || a.name.localeCompare(b.name)
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16">

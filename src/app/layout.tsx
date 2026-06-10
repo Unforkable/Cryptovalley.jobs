@@ -30,12 +30,22 @@ export const metadata: Metadata = {
     siteName: "CryptoValley.jobs",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
   },
   robots: {
     index: true,
     follow: true,
   },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "CryptoValley.jobs",
+  url: BASE_URL,
+  logo: `${BASE_URL}/icon.svg`,
+  description:
+    "Job board for blockchain and crypto companies in Switzerland's Crypto Valley.",
 };
 
 export default function RootLayout({
@@ -48,6 +58,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
         <div className="flex min-h-screen flex-col">
           <Header />
           <main className="flex-1">{children}</main>

@@ -92,7 +92,7 @@ export default async function HomePage() {
             href="/jobs"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
-            View all
+            View all {stats.jobs > 0 ? `${stats.jobs} jobs` : "jobs"}
             <ArrowRight className="size-3" />
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default async function HomePage() {
           <p className="mt-2 text-muted-foreground">
             New crypto jobs in Switzerland, delivered to your inbox.
           </p>
-          <EmailSubscribeForm className="mt-6 flex justify-center" />
+          <EmailSubscribeForm className="mt-6 flex flex-col items-center" />
         </div>
       </section>
     </div>

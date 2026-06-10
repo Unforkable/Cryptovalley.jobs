@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-export function EmailSubscribeForm({ className }: { className?: string }) {
+export function EmailSubscribeForm({
+  className,
+  stacked = false,
+}: {
+  className?: string;
+  stacked?: boolean;
+}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -49,21 +55,25 @@ export function EmailSubscribeForm({ className }: { className?: string }) {
 
   return (
     <form onSubmit={handleSubmit} className={className}>
-      <div className="flex gap-2">
+      <div className={stacked ? "flex w-full flex-col gap-2" : "flex gap-2"}>
         <Input
           type="email"
-          placeholder="your@email.com"
+          placeholder="you@example.com"
+          aria-label="Email address for job alerts"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="max-w-xs"
+          className={stacked ? "w-full" : "max-w-xs"}
         />
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="size-4 animate-spin" />}
-          Subscribe
+          {loading ? "Subscribing..." : "Subscribe"}
         </Button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      <p className="mt-2 text-xs text-muted-foreground">
+        Free job alerts. No spam, unsubscribe anytime.
+      </p>
+      {error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
     </form>
   );
 }

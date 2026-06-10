@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Briefcase, ExternalLink, ArrowLeft } from "lucide-react";
+import { MapPin, Briefcase, ExternalLink, ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getJobBySlug } from "@/lib/supabase/queries";
+import { JobCard } from "@/components/jobs/job-card";
+import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
+import { getJobBySlug, getJobsByCompany } from "@/lib/supabase/queries";
 import { sanitizeHtml, containsHtml } from "@/lib/sanitize-html";
 import type { Job } from "@/types";
 
@@ -18,6 +20,12 @@ const EMPTY_DESCRIPTIONS = new Set([
   "See job posting for details",
   "",
 ]);
+
+function isJobExpired(job: Job): boolean {
+  if (job.status === "expired") return true;
+  if (!job.expires_at) return false;
+  return new Date(job.expires_at).getTime() < Date.now();
+}
 
 function JobDescription({ description, applyUrl }: { description: string; applyUrl: string }) {
   const isEmpty = EMPTY_DESCRIPTIONS.has(description.trim());
@@ -156,15 +164,18 @@ export async function generateMetadata({
   const rawDesc = containsHtml(job.description)
     ? stripHtml(job.description)
     : job.description;
-  const description = rawDesc.length > 155
-    ? rawDesc.slice(0, 155).trimEnd() + "..."
-    : rawDesc;
+  const description = EMPTY_DESCRIPTIONS.has(rawDesc.trim())
+    ? `${companyName} is hiring a ${job.title} (${job.job_type}) in ${job.location ?? "Switzerland"}. Apply now on CryptoValley.jobs.`
+    : rawDesc.length > 155
+      ? rawDesc.slice(0, 155).trimEnd() + "..."
+      : rawDesc;
   const url = `${BASE_URL}/jobs/${job.slug}`;
 
   return {
     title,
     description,
     alternates: { canonical: url },
+    robots: isJobExpired(job) ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `${job.title} in ${job.location ?? "Switzerland"} | ${companyName} | Apply Now`,
       description,
@@ -172,7 +183,7 @@ export async function generateMetadata({
       type: "website",
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
     },
@@ -191,6 +202,11 @@ export default async function JobDetailPage({
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const company = job.company;
   const initials = company?.name?.slice(0, 2).toUpperCase() ?? "??";
+  const expired = isJobExpired(job);
+
+  const moreJobs = (await getJobsByCompany(job.company_id))
+    .filter((j) => j.id !== job.id)
+    .slice(0, 3);
 
   const jsonLd = buildJobPostingSchema(job);
 
@@ -211,6 +227,17 @@ export default async function JobDetailPage({
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main Content */}
         <div className="lg:col-span-2">
+          {expired && (
+            <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <Clock className="size-4 shrink-0" />
+              <span>
+                This position is no longer accepting applications.{" "}
+                <Link href="/jobs" className="font-medium underline">
+                  Browse open jobs
+                </Link>
+              </span>
+            </div>
+          )}
           <h1 className="text-3xl font-extrabold tracking-tight">{job.title}</h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -306,27 +333,70 @@ export default async function JobDetailPage({
 
               <Separator className="my-4" />
 
-              <Button asChild className="hidden w-full rounded-xl lg:inline-flex">
-                <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-                  Apply Now
-                </a>
-              </Button>
-              <p className="mt-2 hidden text-xs text-muted-foreground lg:block">
-                You&apos;ll apply on the company&apos;s website
+              {expired ? (
+                <Button asChild variant="outline" className="hidden w-full rounded-xl lg:inline-flex">
+                  <Link href="/jobs">Browse Open Jobs</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild className="hidden w-full rounded-xl lg:inline-flex">
+                    <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+                      Apply Now
+                    </a>
+                  </Button>
+                  <p className="mt-2 hidden text-xs text-muted-foreground lg:block">
+                    You&apos;ll apply on the company&apos;s website
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Job alerts */}
+          <Card className="mt-6 rounded-xl shadow-sm">
+            <CardContent>
+              <h3 className="font-semibold">Get Job Alerts</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Be the first to hear about new crypto jobs in Switzerland.
               </p>
+              <EmailSubscribeForm className="mt-4" stacked />
             </CardContent>
           </Card>
         </aside>
       </div>
 
+      {/* More jobs from this company */}
+      {moreJobs.length > 0 && company && (
+        <section className="mt-16">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight">
+              More jobs at {company.name}
+            </h2>
+            <Link
+              href={`/companies/${company.slug}`}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              View company profile
+            </Link>
+          </div>
+          <div className="mt-4 flex flex-col gap-3">
+            {moreJobs.map((j) => (
+              <JobCard key={j.id} job={j} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Sticky mobile apply button */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 p-3 backdrop-blur lg:hidden">
-        <Button asChild size="lg" className="w-full rounded-xl shadow-md">
-          <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-            Apply Now
-          </a>
-        </Button>
-      </div>
+      {!expired && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 p-3 backdrop-blur lg:hidden">
+          <Button asChild size="lg" className="w-full rounded-xl shadow-md">
+            <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+              Apply Now
+            </a>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

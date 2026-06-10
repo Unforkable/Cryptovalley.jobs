@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { Search } from "lucide-react";
 import { getActiveJobs } from "@/lib/supabase/queries";
 import { JobCard } from "@/components/jobs/job-card";
 import { JobFilters } from "@/components/jobs/job-filters";
 import { Pagination } from "@/components/jobs/pagination";
+import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
 import type { JobType, JobLocation } from "@/types";
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://cryptovalley.jobs";
 
 export const metadata: Metadata = {
   title: "Browse Jobs",
   description:
     "Browse blockchain, crypto, and Web3 job openings in Switzerland's Crypto Valley.",
+  alternates: { canonical: `${BASE_URL}/jobs` },
+  openGraph: {
+    title: "Browse Blockchain & Crypto Jobs | CryptoValley.jobs",
+    description:
+      "Browse blockchain, crypto, and Web3 job openings in Switzerland's Crypto Valley.",
+    url: `${BASE_URL}/jobs`,
+  },
 };
 
 export default async function JobsPage({
@@ -81,8 +92,27 @@ export default async function JobsPage({
             <p className="mt-1 text-sm text-muted-foreground">
               Try adjusting your filters or check back later.
             </p>
+            {(job_type || location_type || tag) && (
+              <Link
+                href="/jobs"
+                className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+              >
+                Clear all filters
+              </Link>
+            )}
           </div>
         )}
+      </div>
+
+      {/* Job alerts */}
+      <div className="mt-16 rounded-xl border bg-muted/40 px-6 py-10 text-center">
+        <h2 className="text-xl font-bold tracking-tight">
+          Don&apos;t miss your next role
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Get new crypto jobs in Switzerland delivered to your inbox.
+        </p>
+        <EmailSubscribeForm className="mt-5 flex flex-col items-center" />
       </div>
     </div>
   );

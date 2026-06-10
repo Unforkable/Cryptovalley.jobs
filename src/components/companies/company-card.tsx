@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Company } from "@/types";
 
-export function CompanyCard({ company }: { company: Company }) {
+export function CompanyCard({
+  company,
+}: {
+  company: Company & { job_count?: number };
+}) {
   const initials = company.name.slice(0, 2).toUpperCase();
+  const jobCount = company.job_count ?? 0;
 
   return (
     <Link href={`/companies/${company.slug}`}>
@@ -28,6 +34,14 @@ export function CompanyCard({ company }: { company: Company }) {
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
               {company.description}
             </p>
+          )}
+          {jobCount > 0 && (
+            <Badge
+              variant="secondary"
+              className="mt-3 bg-primary/10 text-primary"
+            >
+              {jobCount} open {jobCount === 1 ? "position" : "positions"}
+            </Badge>
           )}
         </CardContent>
       </Card>

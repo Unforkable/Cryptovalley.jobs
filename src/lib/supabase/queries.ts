@@ -2,6 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Job, Company, JobType, JobLocation, JobStatus } from "@/types";
 
+export interface CompanyWithJobCount extends Company {
+  job_count: number;
+}
+
+// PostgREST filter: job has no expiry date or it hasn't passed yet
+function notExpiredFilter() {
+  return `expires_at.is.null,expires_at.gt.${new Date().toISOString()}`;
+}
+
 // ─── Public queries (anon client, respects RLS) ─────────────────────
 
 export async function getLatestJobs(limit = 6): Promise<Job[]> {
@@ -9,6 +18,8 @@ export async function getLatestJobs(limit = 6): Promise<Job[]> {
   const { data } = await supabase
     .from("jobs")
     .select("*, company:companies(*)")
+    .eq("status", "active")
+    .or(notExpiredFilter())
     .order("featured", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(limit);
@@ -31,6 +42,8 @@ export async function getActiveJobs(filters?: {
   let query = supabase
     .from("jobs")
     .select("*, company:companies(*)", { count: "exact" })
+    .eq("status", "active")
+    .or(notExpiredFilter())
     .order("featured", { ascending: false })
     .order("published_at", { ascending: false })
     .range(from, to);
@@ -64,13 +77,19 @@ export async function getJobBySlug(slug: string): Promise<Job | null> {
   return (data as Job) ?? null;
 }
 
-export async function getAllCompanies(): Promise<Company[]> {
+export async function getAllCompanies(): Promise<CompanyWithJobCount[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("companies")
-    .select("*")
+    .select("*, jobs(count)")
+    .eq("jobs.status", "active")
+    .or(notExpiredFilter(), { referencedTable: "jobs" })
     .order("name");
-  return (data as Company[]) ?? [];
+  const companies = (data as (Company & { jobs: { count: number }[] })[]) ?? [];
+  return companies.map(({ jobs, ...company }) => ({
+    ...company,
+    job_count: jobs?.[0]?.count ?? 0,
+  }));
 }
 
 export async function getCompanyBySlug(
@@ -91,6 +110,8 @@ export async function getJobsByCompany(companyId: string): Promise<Job[]> {
     .from("jobs")
     .select("*, company:companies(*)")
     .eq("company_id", companyId)
+    .eq("status", "active")
+    .or(notExpiredFilter())
     .order("featured", { ascending: false })
     .order("published_at", { ascending: false });
   return (data as Job[]) ?? [];
@@ -101,13 +122,17 @@ export async function getPublicStats(): Promise<{
   companies: number;
 }> {
   const supabase = await createClient();
-  const [jobsRes, companiesRes] = await Promise.all([
-    supabase.from("jobs").select("id", { count: "exact", head: true }),
-    supabase.from("companies").select("id", { count: "exact", head: true }),
-  ]);
+  const { data, count } = await supabase
+    .from("jobs")
+    .select("company_id", { count: "exact" })
+    .eq("status", "active")
+    .or(notExpiredFilter());
+  const hiringCompanies = new Set(
+    (data ?? []).map((row) => row.company_id)
+  ).size;
   return {
-    jobs: jobsRes.count ?? 0,
-    companies: companiesRes.count ?? 0,
+    jobs: count ?? 0,
+    companies: hiringCompanies,
   };
 }
 

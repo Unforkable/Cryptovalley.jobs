@@ -10,6 +10,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     supabase
       .from("jobs")
       .select("slug, published_at")
+      .eq("status", "active")
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("published_at", { ascending: false }),
     supabase
       .from("companies")

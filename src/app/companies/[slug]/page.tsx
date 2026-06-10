@@ -18,9 +18,11 @@ export async function generateMetadata({
   const company = await getCompanyBySlug(slug);
   if (!company) return { title: "Company Not Found" };
 
-  const description =
-    company.description?.slice(0, 155).trimEnd() ??
-    `View ${company.name}'s profile and open positions in Crypto Valley.`;
+  const description = company.description
+    ? company.description.length > 155
+      ? company.description.slice(0, 155).trimEnd() + "..."
+      : company.description
+    : `View ${company.name}'s profile and open positions in Crypto Valley.`;
   const url = `${BASE_URL}/companies/${company.slug}`;
 
   return {
@@ -53,8 +55,31 @@ export default async function CompanyDetailPage({
   const jobs = await getJobsByCompany(company.id);
   const initials = company.name.slice(0, 2).toUpperCase();
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: company.name,
+    url: `${BASE_URL}/companies/${company.slug}`,
+    ...(company.website && { sameAs: company.website }),
+    ...(company.logo_url && { logo: company.logo_url }),
+    ...(company.description && { description: company.description }),
+    ...(company.location && {
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: company.location,
+        addressCountry: "CH",
+      },
+    }),
+  };
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationSchema),
+        }}
+      />
       <Link
         href="/companies"
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
