@@ -257,6 +257,103 @@ Do NOT extract navigation links, page headings, or references to external job bo
     return parsed
 
 
+# ── Full descriptions from JSON-LD ──────────────────────────────────
+#
+# Listing pages and some APIs only give a summary (or nothing). Most job
+# pages embed schema.org JobPosting JSON-LD for Google with the full
+# description, so fetch that directly — no LLM needed.
+
+GOOD_DESCRIPTION_CHARS = 2500  # text length below which we look for a better one
+BACKFILL_LIMIT = 60            # job pages fetched per run
+MAX_DESCRIPTION_HTML = 40000
+BROWSER_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+)
+EMAIL_RE = re.compile(r"^(mailto:)?[^@\s/]+@[^@\s/]+\.[a-z]{2,}$", re.IGNORECASE)
+
+
+def text_length(description: str | None) -> int:
+    return len(strip_html(description or ""))
+
+
+def normalize_apply_url(url: str) -> str:
+    """Bare emails ("jobs@x.ch") become mailto: links so Apply works."""
+    url = url.strip()
+    if EMAIL_RE.match(url) and not url.lower().startswith("mailto:"):
+        return f"mailto:{url}"
+    return url
+
+
+async def fetch_jsonld_description(client: httpx.AsyncClient, url: str) -> str | None:
+    if not url.startswith(("http://", "https://")):
+        return None
+    try:
+        resp = await client.get(url, headers={"User-Agent": BROWSER_UA})
+        if resp.status_code >= 400:
+            return None
+    except httpx.HTTPError:
+        return None
+
+    blocks = re.findall(
+        r"<script[^>]*application/ld\+json[^>]*>(.*?)</script>",
+        resp.text, re.S | re.I,
+    )
+    for block in blocks:
+        try:
+            data = json.loads(block.strip())
+        except ValueError:
+            continue
+        if isinstance(data, dict):
+            items = data.get("@graph", [data])
+        elif isinstance(data, list):
+            items = data
+        else:
+            continue
+        for item in items:
+            if not isinstance(item, dict) or "JobPosting" not in str(item.get("@type")):
+                continue
+            desc = item.get("description")
+            if not isinstance(desc, str) or not desc.strip():
+                continue
+            # Some sites HTML-escape the markup inside JSON-LD
+            if "&lt;" in desc and "<" not in desc:
+                desc = unescape(desc)
+            desc = desc.strip()
+            if len(desc) > MAX_DESCRIPTION_HTML:
+                desc = strip_html(desc)[:10000]
+            return desc
+    return None
+
+
+async def backfill_descriptions(client: httpx.AsyncClient, dry_run: bool) -> int:
+    """Replace missing/short descriptions of live jobs with the full JSON-LD one."""
+    now = datetime.now(timezone.utc).isoformat()
+    rows = (
+        supabase.table("jobs")
+        .select("id, title, apply_url, description")
+        .eq("status", "active")
+        .or_(f"expires_at.is.null,expires_at.gt.{now}")
+        .execute()
+    ).data or []
+    candidates = [
+        r for r in rows
+        if text_length(r.get("description")) < GOOD_DESCRIPTION_CHARS
+        and (r.get("apply_url") or "").startswith("http")
+    ]
+
+    updated = 0
+    for job in candidates[:BACKFILL_LIMIT]:
+        desc = await fetch_jsonld_description(client, job["apply_url"])
+        if not desc or text_length(desc) <= text_length(job.get("description")):
+            continue
+        if not dry_run:
+            supabase.table("jobs").update({"description": desc}).eq("id", job["id"]).execute()
+        updated += 1
+        log.info(f"  description: {job['title']} ({text_length(desc)} chars)")
+    return updated
+
+
 # ── Database operations ─────────────────────────────────────────────
 
 def get_existing_apply_urls() -> set[str]:
@@ -395,11 +492,9 @@ async def main():
                     new_count = 0
                     refreshed_count = 0
                     for job in jobs:
-                        apply_url = job.get("apply_url")
-                        if not apply_url:
-                            # Use source URL as fallback
-                            apply_url = source["url"]
-                            job["apply_url"] = apply_url
+                        # Fall back to the source URL when there's no per-job link
+                        apply_url = normalize_apply_url(job.get("apply_url") or source["url"])
+                        job["apply_url"] = apply_url
 
                         # Filter before the refresh path too, so a job that
                         # fails the filter (e.g. after tightening it) is
@@ -438,6 +533,13 @@ async def main():
                 except Exception as e:
                     log.error(f"{'[ERR]':>6} {company_name}: {e}")
                     errors += 1
+
+            try:
+                filled = await backfill_descriptions(client, dry_run)
+                log.info(f"Filled {filled} job descriptions from JSON-LD")
+            except Exception as e:
+                # Never let description enrichment fail the scrape
+                log.error(f"Description backfill failed: {e}")
 
     finally:
         if crawler:

@@ -49,13 +49,16 @@ export function sanitizeHtml(html: string): string {
 
         if (!allowedAttrsForTag.has(attrName)) continue;
 
-        // For href, block javascript: URLs
+        // href: allowlist schemes. A blocklist is bypassable via entities
+        // ("jav&#97;script:") or whitespace, so decode first and only keep
+        // http(s)/mailto. Values are re-escaped so a stray quote can't
+        // break out of the attribute.
         if (attrName === "href") {
-          const trimmed = attrValue.trim().toLowerCase();
-          if (trimmed.startsWith("javascript:") || trimmed.startsWith("data:")) continue;
-          cleanAttrs += ` href="${attrValue}" rel="nofollow noopener" target="_blank"`;
+          const decoded = decodeEntities(attrValue).replace(/[\s\u0000-\u001f]/g, "");
+          if (!/^(https?:|mailto:)/i.test(decoded)) continue;
+          cleanAttrs += ` href="${escapeAttr(decoded)}" rel="nofollow noopener" target="_blank"`;
         } else {
-          cleanAttrs += ` ${attrName}="${attrValue}"`;
+          cleanAttrs += ` ${attrName}="${escapeAttr(decodeEntities(attrValue))}"`;
         }
       }
     }
@@ -63,6 +66,30 @@ export function sanitizeHtml(html: string): string {
     const selfClosing = match.endsWith("/>");
     return `<${tagLower}${cleanAttrs}${selfClosing ? " /" : ""}>`;
   });
+}
+
+// Out-of-range code points would make String.fromCodePoint throw mid-render
+const codePoint = (n: number) => (n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : "");
+
+function decodeEntities(value: string): string {
+  return value
+    .replace(/&#x([0-9a-f]+);?/gi, (_, hex) => codePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);?/g, (_, dec) => codePoint(parseInt(dec, 10)))
+    .replace(/&colon;/gi, ":")
+    .replace(/&tab;|&newline;/gi, "")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+}
+
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 /** Check if a string contains HTML tags */
