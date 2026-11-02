@@ -158,7 +158,8 @@ async def fetch_greenhouse(client: httpx.AsyncClient, source: dict) -> list[dict
         jobs.append({
             "title": j["title"],
             "location": loc.get("name") if loc else None,
-            "description": (j.get("content") or "")[:5000],
+            # Greenhouse returns HTML-escaped markup ("&lt;p&gt;")
+            "description": unescape(j.get("content") or ""),
             "apply_url": j.get("absolute_url", ""),
         })
     return jobs
