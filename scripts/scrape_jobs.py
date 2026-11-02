@@ -295,10 +295,14 @@ def expire_stale_jobs() -> int:
 
 
 def refresh_job(apply_url: str) -> None:
-    """Bump an existing job's freshness and reset its expiry clock."""
+    """Reset an existing job's expiry clock while it's still listed.
+
+    published_at is deliberately left alone: it is the date the job first
+    appeared. Bumping it daily made every listing read "Today" and inflated
+    datePosted in the JobPosting structured data.
+    """
     now = datetime.now(timezone.utc)
     supabase.table("jobs").update({
-        "published_at": now.isoformat(),
         "expires_at": (now + timedelta(days=EXPIRY_DAYS)).isoformat(),
         "status": "active",
     }).eq("apply_url", apply_url).execute()

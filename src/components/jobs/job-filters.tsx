@@ -11,16 +11,16 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 export function JobFilters({
   jobType,
   locationType,
-  tag,
+  q,
 }: {
   jobType?: string;
   locationType?: string;
-  tag?: string;
+  q?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,10 +39,31 @@ export function JobFilters({
     [router, searchParams]
   );
 
-  const hasFilters = jobType || locationType || tag;
+  const hasFilters = jobType || locationType || q;
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/60 p-3">
+      <form
+        role="search"
+        className="relative w-full sm:w-[260px]"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const val = new FormData(e.currentTarget).get("q")?.toString().trim();
+          updateFilter("q", val || undefined);
+        }}
+      >
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          key={q ?? ""}
+          name="q"
+          type="search"
+          placeholder="Search title, company, city…"
+          aria-label="Search jobs"
+          defaultValue={q ?? ""}
+          className="pl-8"
+        />
+      </form>
+
       <Select
         value={jobType ?? "all"}
         onValueChange={(v) => updateFilter("job_type", v === "all" ? undefined : v)}
@@ -75,18 +96,6 @@ export function JobFilters({
           <SelectItem value="hybrid">Hybrid</SelectItem>
         </SelectContent>
       </Select>
-
-      <Input
-        placeholder="Search tags..."
-        defaultValue={tag ?? ""}
-        className="w-[180px]"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            const val = (e.target as HTMLInputElement).value.trim();
-            updateFilter("tag", val || undefined);
-          }
-        }}
-      />
 
       {hasFilters && (
         <Button

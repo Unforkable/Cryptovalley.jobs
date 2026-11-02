@@ -11,6 +11,17 @@ function notExpiredFilter() {
   return `expires_at.is.null,expires_at.gt.${new Date().toISOString()}`;
 }
 
+// Keep letters, digits, spaces and a few title characters (C++, C#, .NET,
+// Front-end, CI/CD). Everything else, notably , ( ) " * % _, would break or
+// widen the PostgREST filter, so it becomes a space.
+function sanitizeSearch(raw: string | undefined) {
+  return (raw ?? "")
+    .replace(/[^\p{L}\p{N}\s+#./-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60);
+}
+
 // ─── Public queries (anon client, respects RLS) ─────────────────────
 
 export async function getLatestJobs(limit = 6): Promise<Job[]> {
@@ -31,10 +42,11 @@ const JOBS_PER_PAGE = 10;
 export async function getActiveJobs(filters?: {
   job_type?: JobType;
   location_type?: JobLocation;
-  tag?: string;
+  q?: string;
   page?: number;
 }): Promise<{ jobs: Job[]; total: number; totalPages: number }> {
   const supabase = await createClient();
+  const term = sanitizeSearch(filters?.q);
   const page = Math.max(1, filters?.page ?? 1);
   const from = (page - 1) * JOBS_PER_PAGE;
   const to = from + JOBS_PER_PAGE - 1;
@@ -54,8 +66,17 @@ export async function getActiveJobs(filters?: {
   if (filters?.location_type) {
     query = query.eq("location_type", filters.location_type);
   }
-  if (filters?.tag) {
-    query = query.contains("tags", [filters.tag]);
+  if (term) {
+    // Match job title, location, or company name. Company name lives in a
+    // joined table, so resolve matching company ids first.
+    const { data: companies } = await supabase
+      .from("companies")
+      .select("id")
+      .ilike("name", `%${term}%`);
+    const conditions = [`title.ilike."*${term}*"`, `location.ilike."*${term}*"`];
+    const ids = (companies ?? []).map((c) => c.id);
+    if (ids.length) conditions.push(`company_id.in.(${ids.join(",")})`);
+    query = query.or(conditions.join(","));
   }
 
   const { data, count } = await query;

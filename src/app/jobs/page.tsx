@@ -30,17 +30,17 @@ export default async function JobsPage({
   searchParams: Promise<{
     job_type?: string;
     location_type?: string;
-    tag?: string;
+    q?: string;
     page?: string;
   }>;
 }) {
-  const { job_type, location_type, tag, page } = await searchParams;
+  const { job_type, location_type, q, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
 
   const { jobs, total, totalPages } = await getActiveJobs({
     job_type: job_type as JobType | undefined,
     location_type: location_type as JobLocation | undefined,
-    tag,
+    q,
     page: currentPage,
   });
 
@@ -48,7 +48,7 @@ export default async function JobsPage({
   const filterParams = new URLSearchParams();
   if (job_type) filterParams.set("job_type", job_type);
   if (location_type) filterParams.set("location_type", location_type);
-  if (tag) filterParams.set("tag", tag);
+  if (q) filterParams.set("q", q);
   const baseHref = filterParams.toString()
     ? `/jobs?${filterParams.toString()}`
     : "/jobs";
@@ -62,13 +62,14 @@ export default async function JobsPage({
 
       <div className="mt-8">
         <Suspense>
-          <JobFilters jobType={job_type} locationType={location_type} tag={tag} />
+          <JobFilters jobType={job_type} locationType={location_type} q={q} />
         </Suspense>
       </div>
 
       <div className="mt-8">
         <p className="text-sm text-muted-foreground">
           {total} {total === 1 ? "job" : "jobs"} found
+          {q && <> for &ldquo;{q}&rdquo;</>}
         </p>
         {jobs.length > 0 ? (
           <>
@@ -92,7 +93,7 @@ export default async function JobsPage({
             <p className="mt-1 text-sm text-muted-foreground">
               Try adjusting your filters or check back later.
             </p>
-            {(job_type || location_type || tag) && (
+            {(job_type || location_type || q) && (
               <Link
                 href="/jobs"
                 className="mt-4 inline-block text-sm font-medium text-primary hover:underline"

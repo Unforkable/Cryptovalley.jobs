@@ -14,6 +14,17 @@ function formatSalary(min: number | null, max: number | null, currency: string) 
   return `Up to ${currency} ${fmt(max!)}`;
 }
 
+// "Zug, Zug, Switzerland" → "Zug"; "Geneva, Switzerland" → "Geneva".
+// Every job here is Swiss or remote, so the country adds nothing.
+function shortLocation(location: string | null) {
+  if (!location) return null;
+  const parts = location
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p, i, all) => p && !/^switzerland$/i.test(p) && all.indexOf(p) === i);
+  return parts.join(", ") || null;
+}
+
 function timeAgo(date: string) {
   const diff = Date.now() - new Date(date).getTime();
   const days = Math.floor(diff / 86400000);
@@ -26,6 +37,9 @@ function timeAgo(date: string) {
 export function JobCard({ job }: { job: Job }) {
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const initials = job.company?.name?.slice(0, 2).toUpperCase() ?? "??";
+  const place = shortLocation(job.location);
+  // Skip "remote" as a second badge when the place already says it
+  const showWorkplace = !(place && /remote/i.test(place) && job.location_type === "remote");
 
   return (
     <Card
@@ -83,10 +97,18 @@ export function JobCard({ job }: { job: Job }) {
               <Briefcase className="size-3" />
               {job.job_type}
             </Badge>
-            <Badge variant="outline" className="gap-1">
-              <MapPin className="size-3" />
-              {job.location_type}
-            </Badge>
+            {place && (
+              <Badge variant="outline" className="gap-1 font-medium text-foreground">
+                <MapPin className="size-3" />
+                {place}
+              </Badge>
+            )}
+            {showWorkplace && (
+              <Badge variant="outline" className="gap-1">
+                {!place && <MapPin className="size-3" />}
+                {job.location_type}
+              </Badge>
+            )}
             {salary && (
               <Badge variant="secondary">{salary}</Badge>
             )}
