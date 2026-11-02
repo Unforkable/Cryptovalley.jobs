@@ -224,6 +224,13 @@ def send_batch(emails: list[dict]) -> int:
 # ── Main ────────────────────────────────────────────────────────────
 
 def main() -> None:
+    # Check before touching the DB: without an email provider there is nothing
+    # to do, and the alerts migration may not have been applied yet. Failing
+    # here used to mark every daily scrape run as failed.
+    if not RESEND_API_KEY and not DRY_RUN:
+        log.warning("RESEND_API_KEY not set — skipping alerts (jobs stay unalerted for the next run).")
+        return
+
     jobs = fetch_unalerted_jobs()
     if not jobs:
         log.info("No unalerted jobs. Done.")
@@ -236,10 +243,6 @@ def main() -> None:
         (recent if published >= cutoff else stale).append(job)
 
     log.info(f"{len(recent)} recent jobs to alert, {len(stale)} stale jobs to skip")
-
-    if not RESEND_API_KEY and not DRY_RUN:
-        log.warning("RESEND_API_KEY not set — skipping alerts (jobs stay unalerted for the next run).")
-        return
 
     subscribers = fetch_subscribers()
     log.info(f"{len(subscribers)} confirmed subscribers")

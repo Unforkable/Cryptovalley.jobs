@@ -5,15 +5,28 @@ on:
     - cron: "0 7 * * *" # Daily at 7 AM UTC (8 AM CET)
   workflow_dispatch: # Manual trigger from GitHub UI
 
+permissions:
+  contents: read
+  actions: write # for the keepalive step below
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      # GitHub disables scheduled workflows after 60 days without repo
+      # activity, which silently empties the board (jobs expire after 30 days).
+      # Re-enabling via the API resets that timer. Runs first so it still
+      # happens if a later step fails.
+      - name: Keep workflow alive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/scrape-jobs.yml/enable"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"

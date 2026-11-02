@@ -60,7 +60,8 @@ export default async function HomePage() {
             </Button>
           </div>
 
-          {/* Stats */}
+          {/* Stats — "0 open positions" undersells the board, so hide when empty */}
+          {stats.jobs > 0 && (
           <div className="mx-auto mt-12 flex items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Briefcase className="size-4 text-primary/60" />
@@ -81,6 +82,7 @@ export default async function HomePage() {
               </span>
             </div>
           </div>
+          )}
         </div>
       </section>
 
@@ -103,16 +105,23 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <div className="mt-8 rounded-lg border border-dashed py-12 text-center">
+          <div className="mt-8 rounded-lg border border-dashed px-4 py-12 text-center">
             <Briefcase className="mx-auto size-8 text-muted-foreground/50" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              No jobs posted yet. Check back soon!
+            <p className="mt-3 font-medium">No open roles right now</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              New listings are added daily. Get them by email, or{" "}
+              <Link href="/post-job" className="underline underline-offset-4 hover:text-foreground">
+                post a job
+              </Link>
+              .
             </p>
+            <EmailSubscribeForm className="mt-6 flex flex-col items-center" />
           </div>
         )}
       </section>
 
-      {/* Email Subscribe */}
+      {/* Email Subscribe (the empty state above already includes the form) */}
+      {jobs.length > 0 && (
       <section className="border-t bg-muted/40">
         <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:py-20">
           <h2 className="text-2xl font-bold tracking-tight">Get Job Alerts</h2>
@@ -122,6 +131,7 @@ export default async function HomePage() {
           <EmailSubscribeForm className="mt-6 flex flex-col items-center" />
         </div>
       </section>
+      )}
     </div>
   );
 }
