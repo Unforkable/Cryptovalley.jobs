@@ -89,28 +89,60 @@ SWISS_KEYWORDS = [
     "st. gallen", "st gallen", "lucerne", "luzern", "biel",
     "thun", "köniz", "aarau", "chur", "neuchâtel", "neuchatel",
     "schaffhausen", "fribourg", "crypto valley",
+    # Crypto Valley towns around Zug
+    "baar", "cham", "rotkreuz", "steinhausen", "hünenberg", "pfäffikon",
 ]
+
+# Uppercase canton/country codes as they appear in e.g. "Baar ZG", "Remote, CH"
+SWISS_CODES = re.compile(r"\b(CH|ZG|ZH|VD|LU|TI)\b")
+
+# Words that describe a remote setup without naming a specific place. A remote
+# job whose location contains anything beyond these (e.g. "United States",
+# "Australia", "Earth") is not open to people in Switzerland.
+REMOTE_OK_WORDS = {
+    "remote", "fully", "first", "only", "friendly", "flexible", "hybrid",
+    "europe", "european", "eu", "emea", "cet", "cest", "timezone",
+    "timezones", "time", "zone", "zones", "worldwide", "global", "anywhere",
+}
+
+NON_EUROPE_TITLE = re.compile(
+    r"\b(LATAM|APAC|Americas|North America|South America|Asia|"
+    r"US|USA|Canada|India|Japan|Korea|Singapore|Australia|Brazil|Africa)\b"
+)
+
+NOT_A_JOB = re.compile(
+    r"talent pool|general application|open application|"
+    r"spontaneous application|unsolicited application",
+    re.IGNORECASE,
+)
 
 
 def is_swiss_or_remote(job: dict) -> bool:
-    """Return True if the job is based in Switzerland or is remote."""
+    """Return True if the job is based in Switzerland, or remote and open to
+    candidates in Switzerland/Europe."""
+    if NOT_A_JOB.search(job.get("title") or ""):
+        return False
+
+    raw_location = job.get("location") or ""
+    location = raw_location.lower()
+    if any(kw in location for kw in SWISS_KEYWORDS) or SWISS_CODES.search(raw_location):
+        return True
+
     loc_type = (
         job.get("location_type")
         or job.get("location_type_hint")
         or ""
     ).lower()
-    if "remote" in loc_type:
-        return True
+    if "remote" not in loc_type and "remote" not in location:
+        return False
 
-    location = (job.get("location") or "").lower()
-    if "remote" in location:
-        return True
+    # Remote roles scoped to another region in the title ("BD Director, LATAM")
+    if NON_EUROPE_TITLE.search(job.get("title") or ""):
+        return False
 
-    for kw in SWISS_KEYWORDS:
-        if kw in location:
-            return True
-
-    return False
+    # Remote: accept only if the location names no specific (non-Swiss) place
+    leftover = [w for w in re.findall(r"[a-zà-ÿ]+", location) if w not in REMOTE_OK_WORDS]
+    return not leftover
 
 
 # ── API-based fetchers (free, no LLM needed) ───────────────────────
@@ -365,15 +397,21 @@ async def main():
                             apply_url = source["url"]
                             job["apply_url"] = apply_url
 
+                        # Filter before the refresh path too, so a job that
+                        # fails the filter (e.g. after tightening it) is
+                        # never reactivated and simply expires.
+                        if not is_swiss_or_remote(job):
+                            log.info(
+                                f"  ~ skipped (not Swiss/remote): "
+                                f"{job.get('title')} [{job.get('location')}]"
+                            )
+                            continue
+
                         if apply_url in existing_urls:
                             # Job still on career page — refresh it
                             if not dry_run:
                                 refresh_job(apply_url)
                             refreshed_count += 1
-                            continue
-
-                        if not is_swiss_or_remote(job):
-                            log.info(f"  ~ skipped (not Swiss/remote): {job.get('title')}")
                             continue
 
                         if not dry_run:
