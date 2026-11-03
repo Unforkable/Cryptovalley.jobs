@@ -6,7 +6,8 @@ Fetches job listings from crypto company career pages and inserts
 them into Supabase as "pending" for admin review.
 
 Sources are configured in sources.json. Three strategies:
-  1. Greenhouse / Lever / Ashby → public JSON APIs (free, reliable)
+  1. Greenhouse / Lever / Ashby / Recruitee / SmartRecruiters → public JSON
+     APIs (free, reliable)
   2. Generic career pages → crawl4ai + LLM extraction
   3. LinkedIn company pages → crawl4ai + LLM extraction
 """
@@ -21,6 +22,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from html import unescape
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from supabase import create_client
@@ -182,7 +184,8 @@ async def fetch_lever(client: httpx.AsyncClient, source: dict) -> list[dict]:
             "description": desc[:2000],
             "apply_url": j.get("hostedUrl", ""),
             "job_type_hint": cats.get("commitment"),
-            "location_type_hint": cats.get("workplaceType"),
+            # Top-level on Lever postings, not under categories
+            "location_type_hint": j.get("workplaceType") or cats.get("workplaceType"),
         })
     return jobs
 
@@ -197,8 +200,65 @@ async def fetch_ashby(client: httpx.AsyncClient, source: dict) -> list[dict]:
         jobs.append({
             "title": j.get("title", ""),
             "location": j.get("location", ""),
-            "description": (j.get("descriptionHtml") or "")[:5000],
+            "description": j.get("descriptionHtml") or "",
             "apply_url": j.get("jobUrl", j.get("applyUrl", "")),
+            "job_type_hint": j.get("employmentType"),
+            "location_type_hint": j.get("workplaceType") or ("remote" if j.get("isRemote") else None),
+        })
+    return jobs
+
+
+def workplace_hint(remote: bool | None, hybrid: bool | None) -> str:
+    if remote:
+        return "remote"
+    return "hybrid" if hybrid else "onsite"
+
+
+async def fetch_recruitee(client: httpx.AsyncClient, source: dict) -> list[dict]:
+    board = source["board"]
+    resp = await client.get(f"https://{board}.recruitee.com/api/offers/")
+    resp.raise_for_status()
+    jobs = []
+    for o in resp.json().get("offers", []):
+        description = o.get("description") or ""
+        if o.get("requirements"):
+            description += "<h3>Requirements</h3>" + o["requirements"]
+        jobs.append({
+            "title": o.get("title", ""),
+            "location": o.get("location"),
+            "description": description,
+            "apply_url": o.get("careers_url", ""),
+            "job_type_hint": o.get("employment_type_code"),
+            "location_type_hint": workplace_hint(o.get("remote"), o.get("hybrid")),
+        })
+    return jobs
+
+
+async def fetch_smartrecruiters(client: httpx.AsyncClient, source: dict) -> list[dict]:
+    board = source["board"]
+    base = f"https://api.smartrecruiters.com/v1/companies/{board}/postings"
+    resp = await client.get(base, params={"limit": 100})
+    resp.raise_for_status()
+    jobs = []
+    for j in resp.json().get("content", []):
+        loc = j.get("location") or {}
+        # fullLocation looks like "Zug, , Switzerland"
+        place = ", ".join(p.strip() for p in (loc.get("fullLocation") or "").split(",") if p.strip())
+        # The list endpoint has no description or public URL; the detail one does
+        detail = (await client.get(f"{base}/{j['id']}")).json()
+        sections = (detail.get("jobAd") or {}).get("sections") or {}
+        description = "".join(
+            f"<h3>{s['title']}</h3>{s['text']}"
+            for key in ("jobDescription", "qualifications", "additionalInformation")
+            if (s := sections.get(key)) and s.get("text")
+        )
+        jobs.append({
+            "title": j.get("name", ""),
+            "location": place or None,
+            "description": description,
+            "apply_url": detail.get("postingUrl") or "",
+            "job_type_hint": (j.get("typeOfEmployment") or {}).get("label"),
+            "location_type_hint": workplace_hint(loc.get("remote"), loc.get("hybrid")),
         })
     return jobs
 
@@ -286,7 +346,8 @@ def normalize_apply_url(url: str) -> str:
     return url
 
 
-async def fetch_jsonld_description(client: httpx.AsyncClient, url: str) -> str | None:
+async def fetch_jsonld_posting(client: httpx.AsyncClient, url: str) -> dict | None:
+    """Return the schema.org JobPosting embedded in a job page, if any."""
     if not url.startswith(("http://", "https://")):
         return None
     try:
@@ -312,19 +373,38 @@ async def fetch_jsonld_description(client: httpx.AsyncClient, url: str) -> str |
         else:
             continue
         for item in items:
-            if not isinstance(item, dict) or "JobPosting" not in str(item.get("@type")):
-                continue
-            desc = item.get("description")
-            if not isinstance(desc, str) or not desc.strip():
-                continue
-            # Some sites HTML-escape the markup inside JSON-LD
-            if "&lt;" in desc and "<" not in desc:
-                desc = unescape(desc)
-            desc = desc.strip()
-            if len(desc) > MAX_DESCRIPTION_HTML:
-                desc = strip_html(desc)[:10000]
-            return desc
+            if isinstance(item, dict) and "JobPosting" in str(item.get("@type")):
+                return item
     return None
+
+
+def jsonld_description(posting: dict | None) -> str | None:
+    desc = (posting or {}).get("description")
+    if not isinstance(desc, str) or not desc.strip():
+        return None
+    # Some sites HTML-escape the markup inside JSON-LD
+    if "&lt;" in desc and "<" not in desc:
+        desc = unescape(desc)
+    desc = desc.strip()
+    if len(desc) > MAX_DESCRIPTION_HTML:
+        desc = strip_html(desc)[:10000]
+    return desc
+
+
+def jsonld_employer(posting: dict | None) -> tuple[str, str | None] | None:
+    """(name, website) of the hiring organization in a JobPosting."""
+    org = (posting or {}).get("hiringOrganization")
+    if isinstance(org, list):
+        org = org[0] if org else None
+    if not isinstance(org, dict) or not isinstance(org.get("name"), str):
+        return None
+    name = org["name"].strip()
+    website = org.get("sameAs") or org.get("url")
+    if isinstance(website, list):
+        website = website[0] if website else None
+    if not isinstance(website, str) or not website.startswith("http"):
+        website = None
+    return (name, website) if name else None
 
 
 async def backfill_descriptions(client: httpx.AsyncClient, dry_run: bool) -> int:
@@ -345,7 +425,7 @@ async def backfill_descriptions(client: httpx.AsyncClient, dry_run: bool) -> int
 
     updated = 0
     for job in candidates[:BACKFILL_LIMIT]:
-        desc = await fetch_jsonld_description(client, job["apply_url"])
+        desc = jsonld_description(await fetch_jsonld_posting(client, job["apply_url"]))
         if not desc or text_length(desc) <= text_length(job.get("description")):
             continue
         if not dry_run:
@@ -362,6 +442,19 @@ def get_existing_apply_urls() -> set[str]:
     return {r["apply_url"] for r in result.data if r.get("apply_url")}
 
 
+def favicon_logo(website: str | None) -> str | None:
+    """Google's 128px favicon for the site, or None when it has none
+    (Google then answers 404 with a generic globe)."""
+    domain = urlparse(website).netloc if website else ""
+    if not domain:
+        return None
+    url = f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
+    try:
+        return url if httpx.get(url, follow_redirects=True, timeout=10).status_code == 200 else None
+    except httpx.HTTPError:
+        return None
+
+
 def get_or_create_company(name: str, website: str | None = None) -> dict:
     result = supabase.table("companies").select("*").ilike("name", name).execute()
     if result.data:
@@ -369,7 +462,12 @@ def get_or_create_company(name: str, website: str | None = None) -> dict:
 
     result = (
         supabase.table("companies")
-        .insert({"name": name, "slug": slugify(name), "website": website})
+        .insert({
+            "name": name,
+            "slug": slugify(name),
+            "website": website,
+            "logo_url": favicon_logo(website),
+        })
         .execute()
     )
     log.info(f"  Created company: {name}")
@@ -435,6 +533,8 @@ API_FETCHERS = {
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "ashby": fetch_ashby,
+    "recruitee": fetch_recruitee,
+    "smartrecruiters": fetch_smartrecruiters,
 }
 
 
@@ -514,16 +614,22 @@ async def main():
                             refreshed_count += 1
                             continue
 
+                        employer = (company_name, source.get("website"))
+                        if source.get("aggregator"):
+                            # Ecosystem boards (jobs.solana.com) list jobs at
+                            # many companies; credit the actual employer.
+                            posting = await fetch_jsonld_posting(client, apply_url)
+                            employer = jsonld_employer(posting) or employer
+                            job["description"] = jsonld_description(posting) or job.get("description")
+
                         if not dry_run:
-                            company = get_or_create_company(
-                                company_name, source.get("website")
-                            )
+                            company = get_or_create_company(*employer)
                             insert_job(job, company["id"])
 
                         existing_urls.add(apply_url)
                         inserted += 1
                         new_count += 1
-                        log.info(f"  + {job['title']}")
+                        log.info(f"  + {job['title']} ({employer[0]})")
 
                     log.info(
                         f"{'[OK]':>6} {company_name}: "
