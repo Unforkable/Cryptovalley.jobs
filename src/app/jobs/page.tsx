@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Search } from "lucide-react";
 import { getActiveJobs } from "@/lib/supabase/queries";
-import { JobCard } from "@/components/jobs/job-card";
+import { JobList } from "@/components/jobs/job-card";
 import { JobFilters } from "@/components/jobs/job-filters";
 import { Pagination } from "@/components/jobs/pagination";
 import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
@@ -54,10 +53,13 @@ export default async function JobsPage({
     : "/jobs";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16">
-      <h1 className="text-3xl font-extrabold tracking-tight">All Jobs</h1>
-      <p className="mt-2 text-muted-foreground">
-        Browse open positions from top crypto companies in Switzerland.
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+      <h1 className="font-condensed text-5xl font-extrabold leading-none tracking-[-0.01em] sm:text-6xl">
+        All jobs
+      </h1>
+      <p className="mt-3 max-w-xl text-muted-foreground">
+        Open roles at crypto and blockchain companies in Switzerland, plus
+        remote roles open to people living here.
       </p>
 
       <div className="mt-8">
@@ -67,17 +69,13 @@ export default async function JobsPage({
       </div>
 
       <div className="mt-8">
-        <p className="text-sm text-muted-foreground">
-          {total} {total === 1 ? "job" : "jobs"} found
-          {q && <> for &ldquo;{q}&rdquo;</>}
+        <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+          {total} {total === 1 ? "job" : "jobs"}
+          {q && <> matching &ldquo;{q}&rdquo;</>}
         </p>
         {jobs.length > 0 ? (
           <>
-            <div className="mt-4 flex flex-col gap-4">
-              {jobs.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </div>
+            <JobList jobs={jobs} />
             <div className="mt-8">
               <Pagination
                 currentPage={currentPage}
@@ -87,18 +85,17 @@ export default async function JobsPage({
             </div>
           </>
         ) : (
-          <div className="mt-8 rounded-lg border border-dashed py-16 text-center">
-            <Search className="mx-auto size-8 text-muted-foreground/50" />
-            <p className="mt-3 text-sm font-medium">No jobs found</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Try adjusting your filters or check back later.
+          <div className="border-y py-12">
+            <p className="text-lg font-semibold">No jobs match these filters</p>
+            <p className="mt-1 text-muted-foreground">
+              Try a shorter search or a different job type.
             </p>
             {(job_type || location_type || q) && (
               <Link
                 href="/jobs"
-                className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+                className="mt-4 inline-block font-medium underline underline-offset-4 hover:no-underline"
               >
-                Clear all filters
+                Clear filters
               </Link>
             )}
           </div>
@@ -106,14 +103,16 @@ export default async function JobsPage({
       </div>
 
       {/* Job alerts */}
-      <div className="mt-16 rounded-xl border bg-muted/40 px-6 py-10 text-center">
-        <h2 className="text-xl font-bold tracking-tight">
-          Don&apos;t miss your next role
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Get new crypto jobs in Switzerland delivered to your inbox.
-        </p>
-        <EmailSubscribeForm className="mt-5 flex flex-col items-center" />
+      <div className="mt-16 grid gap-6 border-t pt-10 lg:grid-cols-12 lg:items-end">
+        <div className="lg:col-span-6">
+          <h2 className="font-condensed text-4xl font-extrabold leading-none tracking-[-0.01em]">
+            Get new roles by email
+          </h2>
+          <p className="mt-3 max-w-md text-muted-foreground">
+            One short email on mornings when new jobs are added.
+          </p>
+        </div>
+        <EmailSubscribeForm className="lg:col-span-6" />
       </div>
     </div>
   );

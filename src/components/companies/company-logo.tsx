@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 /**
  * Company logo with initials underneath.
@@ -23,8 +24,8 @@ export function CompanyLogo({
 }) {
   const initials = name?.slice(0, 2).toUpperCase() ?? "??";
   return (
-    <Avatar size={size} className={className}>
-      <AvatarFallback className={fallbackClassName}>{initials}</AvatarFallback>
+    <Avatar size={size} className={cn("rounded-sm", className)}>
+      <AvatarFallback className={cn("rounded-sm", fallbackClassName)}>{initials}</AvatarFallback>
       {logoUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- tiny remote favicon, next/image adds nothing
         <img

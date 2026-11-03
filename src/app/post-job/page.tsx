@@ -25,7 +25,7 @@ export default async function PostJobPage() {
         Reach the best blockchain and crypto talent in Switzerland.
       </p>
 
-      <div className="mt-6 rounded-xl border bg-muted/40 p-4">
+      <div className="mt-6 rounded-sm border bg-muted/40 p-4">
         <p className="font-semibold">
           CHF 299 <span className="font-normal text-muted-foreground">per posting — one-time, no subscription</span>
         </p>

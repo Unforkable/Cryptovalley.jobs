@@ -24,13 +24,13 @@ export default async function UnsubscribePage({
       </p>
       <form method="POST" action="/api/unsubscribe" className="mt-8">
         <input type="hidden" name="token" value={token ?? ""} />
-        <Button type="submit" variant="destructive" className="rounded-xl px-8">
+        <Button type="submit" variant="destructive" className="rounded-sm px-8">
           Unsubscribe
         </Button>
       </form>
       <p className="mt-6 text-sm text-muted-foreground">
         Changed your mind?{" "}
-        <Link href="/jobs" className="text-primary hover:underline">
+        <Link href="/jobs" className="underline underline-offset-4 hover:no-underline">
           Browse the latest jobs
         </Link>
       </p>

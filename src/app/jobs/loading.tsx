@@ -1,42 +1,30 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-function JobCardSkeleton() {
+function JobRowSkeleton() {
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <div className="flex gap-4">
-        <Skeleton className="size-10 shrink-0 rounded-full" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-3.5 w-36" />
-          <Skeleton className="h-5 w-56" />
-          <div className="flex gap-2 pt-1">
-            <Skeleton className="h-5 w-20 rounded-full" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-            <Skeleton className="h-5 w-24 rounded-full" />
-          </div>
-        </div>
-        <Skeleton className="h-3.5 w-12 shrink-0" />
+    <div className="flex gap-4 border-b py-4">
+      <Skeleton className="size-10 shrink-0 rounded-sm" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-5 w-64 max-w-full" />
+        <Skeleton className="h-3.5 w-32" />
       </div>
+      <Skeleton className="hidden h-4 w-24 md:block" />
+      <Skeleton className="hidden h-4 w-20 md:block" />
+      <Skeleton className="hidden h-4 w-16 md:block" />
     </div>
   );
 }
 
 export default function JobsLoading() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16">
-      <Skeleton className="h-9 w-40" />
-      <Skeleton className="mt-2 h-5 w-96" />
-
-      <div className="mt-8">
-        <Skeleton className="h-14 w-full rounded-xl" />
-      </div>
-
-      <div className="mt-8">
-        <Skeleton className="h-4 w-24" />
-        <div className="mt-4 flex flex-col gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <JobCardSkeleton key={i} />
-          ))}
-        </div>
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+      <Skeleton className="h-14 w-56" />
+      <Skeleton className="mt-3 h-5 w-96 max-w-full" />
+      <Skeleton className="mt-8 h-10 w-full max-w-xl" />
+      <div className="mt-12 border-t">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <JobRowSkeleton key={i} />
+        ))}
       </div>
     </div>
   );

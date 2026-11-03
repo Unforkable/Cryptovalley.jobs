@@ -14,6 +14,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { Wordmark } from "@/components/layout/logo";
 
 const navLinks = [
   { href: "/jobs", label: "Jobs" },
@@ -25,30 +26,30 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 border-b bg-background">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-extrabold tracking-tight">
-          <span className="text-primary">Crypto</span>Valley<span className="text-muted-foreground">.jobs</span>
+        <Link href="/" aria-label="CryptoValley.jobs home">
+          <Wordmark />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="hidden items-center gap-6 sm:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                "text-[15px] font-medium underline-offset-[6px]",
                 pathname === link.href || pathname.startsWith(link.href + "/")
-                  ? "text-foreground"
+                  ? "text-foreground underline decoration-2"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               {link.label}
             </Link>
           ))}
-          <Button asChild size="sm" className="ml-2 rounded-lg shadow-sm">
-            <Link href="/post-job">Post a Job</Link>
+          <Button asChild size="sm">
+            <Link href="/post-job">Post a job</Link>
           </Button>
         </nav>
 
@@ -66,7 +67,7 @@ export function Header() {
           <SheetContent side="right" className="w-72">
             <SheetHeader>
               <SheetTitle>
-                <span className="text-primary">Crypto</span>Valley<span className="text-muted-foreground">.jobs</span>
+                <Wordmark />
               </SheetTitle>
               <SheetDescription className="sr-only">
                 Navigation menu
@@ -90,7 +91,7 @@ export function Header() {
               ))}
               <SheetClose asChild>
                 <Button asChild className="mt-2">
-                  <Link href="/post-job">Post a Job</Link>
+                  <Link href="/post-job">Post a job</Link>
                 </Button>
               </SheetClose>
             </nav>

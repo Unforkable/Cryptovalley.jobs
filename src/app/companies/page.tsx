@@ -23,14 +23,16 @@ export default async function CompaniesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16">
-      <h1 className="text-3xl font-extrabold tracking-tight">Companies</h1>
-      <p className="mt-2 text-muted-foreground">
-        Explore crypto and blockchain companies hiring in Switzerland.
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+      <h1 className="font-condensed text-5xl font-extrabold leading-none tracking-[-0.01em] sm:text-6xl">
+        Companies
+      </h1>
+      <p className="mt-3 max-w-xl text-muted-foreground">
+        Crypto and blockchain companies we check for new roles every morning.
       </p>
 
       {companies.length > 0 ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 border-l border-t sm:grid-cols-2 lg:grid-cols-3">
           {companies.map((company) => (
             <CompanyCard key={company.id} company={company} />
           ))}

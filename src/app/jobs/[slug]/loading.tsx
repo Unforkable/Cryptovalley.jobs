@@ -23,7 +23,7 @@ export default function JobDetailLoading() {
           </div>
         </div>
         <div>
-          <div className="rounded-xl border p-6">
+          <div className="rounded-sm border p-6">
             <div className="flex flex-col items-center">
               <Skeleton className="size-12 rounded-full" />
               <Skeleton className="mt-3 h-5 w-32" />

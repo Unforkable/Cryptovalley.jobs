@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { MapPin, ExternalLink, ArrowLeft } from "lucide-react";
 import { CompanyLogo } from "@/components/companies/company-logo";
 import { Separator } from "@/components/ui/separator";
-import { JobCard } from "@/components/jobs/job-card";
+import { JobList } from "@/components/jobs/job-card";
 import { getCompanyBySlug, getJobsByCompany } from "@/lib/supabase/queries";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://cryptovalley.jobs";
@@ -84,7 +84,7 @@ export default async function CompanyDetailPage({
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-3" />
-        All Companies
+        All companies
       </Link>
 
       <div className="flex items-start gap-6">
@@ -92,11 +92,11 @@ export default async function CompanyDetailPage({
           name={company.name}
           logoUrl={company.logo_url}
           size="default"
-          className="size-16 shrink-0 rounded-lg"
-          fallbackClassName="rounded-lg text-lg"
+          className="size-16 shrink-0"
+          fallbackClassName="text-lg"
         />
         <div>
-          <h1 className="text-3xl font-bold">{company.name}</h1>
+          <h1 className="font-condensed text-5xl font-extrabold leading-none tracking-[-0.01em]">{company.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {company.location && (
               <span className="flex items-center gap-1">
@@ -131,14 +131,12 @@ export default async function CompanyDetailPage({
       <Separator className="my-8" />
 
       <h2 className="text-xl font-bold">
-        Open Positions ({jobs.length})
+        {jobs.length} open {jobs.length === 1 ? "role" : "roles"}
       </h2>
 
       {jobs.length > 0 ? (
-        <div className="mt-4 flex flex-col gap-3">
-          {jobs.map((job) => (
-            <JobCard key={job.id} job={job} />
-          ))}
+        <div className="mt-4">
+          <JobList jobs={jobs} header={false} />
         </div>
       ) : (
         <p className="mt-4 text-muted-foreground">

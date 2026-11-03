@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Briefcase, ExternalLink, ArrowLeft, Clock } from "lucide-react";
+import { MapPin, ExternalLink, ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CompanyLogo } from "@/components/companies/company-logo";
-import { JobCard } from "@/components/jobs/job-card";
+import { JobList } from "@/components/jobs/job-card";
 import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
 import { getJobBySlug, getJobsByCompany } from "@/lib/supabase/queries";
 import { sanitizeHtml, containsHtml } from "@/lib/sanitize-html";
@@ -40,7 +40,7 @@ function JobDescription({ description, applyUrl }: { description: string; applyU
           href={applyUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline underline-offset-4 hover:no-underline"
         >
           View full description & apply
           <ExternalLink className="size-3" />
@@ -52,7 +52,7 @@ function JobDescription({ description, applyUrl }: { description: string; applyU
   if (containsHtml(description)) {
     return (
       <div
-        className="prose prose-sm max-w-none prose-headings:font-semibold prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
+        className="prose prose-neutral max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-a:text-foreground prose-a:underline prose-a:underline-offset-2 hover:prose-a:no-underline"
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
       />
     );
@@ -220,7 +220,7 @@ export default async function JobDetailPage({
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-3" />
-        All Jobs
+        All jobs
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -237,24 +237,14 @@ export default async function JobDetailPage({
               </span>
             </div>
           )}
-          <h1 className="text-3xl font-extrabold tracking-tight">{job.title}</h1>
+          <h1 className="font-condensed text-4xl font-extrabold leading-[0.95] tracking-[-0.01em] text-balance sm:text-5xl">{job.title}</h1>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="gap-1">
-              <Briefcase className="size-3" />
-              {job.job_type}
-            </Badge>
-            <Badge variant="outline" className="gap-1">
-              <MapPin className="size-3" />
-              {job.location_type}
-            </Badge>
-            {job.location && (
-              <Badge variant="secondary" className="gap-1">
-                <MapPin className="size-3" />
-                {job.location}
-              </Badge>
-            )}
-          </div>
+          <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[15px]">
+            {company && <span className="font-medium">{company.name}</span>}
+            {job.location && <span>{job.location}</span>}
+            <span>{job.job_type.charAt(0).toUpperCase() + job.job_type.slice(1)}</span>
+            <span className="capitalize">{job.location_type === "onsite" ? "On-site" : job.location_type}</span>
+          </p>
 
           {salary && (
             <>
@@ -293,7 +283,7 @@ export default async function JobDetailPage({
 
         {/* Sidebar */}
         <aside>
-          <Card className="sticky top-20 rounded-xl shadow-sm">
+          <Card className="sticky top-20 rounded-sm shadow-none">
             <CardContent className="flex flex-col items-center text-center">
               <CompanyLogo name={company?.name} logoUrl={company?.logo_url} className="mb-3" />
 
@@ -301,7 +291,7 @@ export default async function JobDetailPage({
                 <>
                   <Link
                     href={`/companies/${company.slug}`}
-                    className="font-semibold hover:text-primary hover:underline"
+                    className="font-semibold hover:underline"
                   >
                     {company.name}
                   </Link>
@@ -328,30 +318,27 @@ export default async function JobDetailPage({
               <Separator className="my-4" />
 
               {expired ? (
-                <Button asChild variant="outline" className="hidden w-full rounded-xl lg:inline-flex">
-                  <Link href="/jobs">Browse Open Jobs</Link>
+                <Button asChild variant="outline" className="hidden h-11 w-full lg:inline-flex">
+                  <Link href="/jobs">See open jobs</Link>
                 </Button>
               ) : (
                 <>
-                  <Button asChild className="hidden w-full rounded-xl lg:inline-flex">
+                  <Button asChild className="hidden h-11 w-full lg:inline-flex">
                     <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-                      Apply Now
+                      Apply on company site
                     </a>
                   </Button>
-                  <p className="mt-2 hidden text-xs text-muted-foreground lg:block">
-                    You&apos;ll apply on the company&apos;s website
-                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
           {/* Job alerts */}
-          <Card className="mt-6 rounded-xl shadow-sm">
+          <Card className="mt-6 rounded-sm shadow-none">
             <CardContent>
-              <h3 className="font-semibold">Get Job Alerts</h3>
+              <h3 className="font-semibold">Get new roles by email</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Be the first to hear about new crypto jobs in Switzerland.
+                One short email on mornings when new jobs are added.
               </p>
               <EmailSubscribeForm className="mt-4" stacked />
             </CardContent>
@@ -370,13 +357,11 @@ export default async function JobDetailPage({
               href={`/companies/${company.slug}`}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              View company profile
+              Company profile
             </Link>
           </div>
-          <div className="mt-4 flex flex-col gap-3">
-            {moreJobs.map((j) => (
-              <JobCard key={j.id} job={j} />
-            ))}
+          <div className="mt-4">
+            <JobList jobs={moreJobs} header={false} />
           </div>
         </section>
       )}
@@ -384,9 +369,9 @@ export default async function JobDetailPage({
       {/* Sticky mobile apply button */}
       {!expired && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 p-3 backdrop-blur lg:hidden">
-          <Button asChild size="lg" className="w-full rounded-xl shadow-md">
+          <Button asChild size="lg" className="h-12 w-full">
             <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-              Apply Now
+              Apply on company site
             </a>
           </Button>
         </div>

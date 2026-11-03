@@ -52,7 +52,7 @@ export default async function SubscriptionStatusPage({
         {content.title}
       </h1>
       <p className="mt-3 text-muted-foreground">{content.body}</p>
-      <Button asChild className="mt-8 rounded-xl px-8">
+      <Button asChild className="mt-8 rounded-sm px-8">
         <Link href="/jobs">Browse Jobs</Link>
       </Button>
     </div>

@@ -42,7 +42,7 @@ export function JobFilters({
   const hasFilters = jobType || locationType || q;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/60 p-3">
+    <div className="flex flex-wrap items-center gap-3">
       <form
         role="search"
         className="relative w-full sm:w-[260px]"
@@ -57,10 +57,10 @@ export function JobFilters({
           key={q ?? ""}
           name="q"
           type="search"
-          placeholder="Search title, company, city…"
+          placeholder="Role, company or city"
           aria-label="Search jobs"
           defaultValue={q ?? ""}
-          className="pl-8"
+          className="h-10 pl-8"
         />
       </form>
 
@@ -68,7 +68,7 @@ export function JobFilters({
         value={jobType ?? "all"}
         onValueChange={(v) => updateFilter("job_type", v === "all" ? undefined : v)}
       >
-        <SelectTrigger className="w-[160px]">
+        <SelectTrigger className="w-[160px]" aria-label="Job type">
           <SelectValue placeholder="Job type" />
         </SelectTrigger>
         <SelectContent>
@@ -86,13 +86,13 @@ export function JobFilters({
           updateFilter("location_type", v === "all" ? undefined : v)
         }
       >
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="Location" />
+        <SelectTrigger className="w-[160px]" aria-label="Workplace">
+          <SelectValue placeholder="Workplace" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All locations</SelectItem>
+          <SelectItem value="all">Any workplace</SelectItem>
           <SelectItem value="remote">Remote</SelectItem>
-          <SelectItem value="onsite">Onsite</SelectItem>
+          <SelectItem value="onsite">On-site</SelectItem>
           <SelectItem value="hybrid">Hybrid</SelectItem>
         </SelectContent>
       </Select>
@@ -105,7 +105,7 @@ export function JobFilters({
           className="gap-1 text-muted-foreground"
         >
           <X className="size-3" />
-          Clear
+          Clear filters
         </Button>
       )}
     </div>

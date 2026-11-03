@@ -63,15 +63,15 @@ export function EmailSubscribeForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className={stacked ? "w-full" : "max-w-xs"}
+          className={stacked ? "h-11 w-full" : "h-11 max-w-xs"}
         />
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="h-11 px-5">
           {loading && <Loader2 className="size-4 animate-spin" />}
-          {loading ? "Subscribing..." : "Subscribe"}
+          {loading ? "Subscribing…" : "Subscribe"}
         </Button>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Free job alerts. No spam, unsubscribe anytime.
+        Free. Unsubscribe with one click.
       </p>
       {error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
     </form>

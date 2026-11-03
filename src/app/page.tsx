@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, Building2, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { JobCard } from "@/components/jobs/job-card";
+import { JobList } from "@/components/jobs/job-card";
 import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
 import { getLatestJobs, getPublicStats } from "@/lib/supabase/queries";
 
@@ -27,11 +25,19 @@ const websiteSchema = {
     "Job board for blockchain and crypto companies in Switzerland's Crypto Valley.",
 };
 
+// Every open role fits on the homepage for now; /jobs has filters and paging
+const HOME_LIMIT = 50;
+
 export default async function HomePage() {
   const [jobs, stats] = await Promise.all([
-    getLatestJobs(6),
+    getLatestJobs(HOME_LIMIT),
     getPublicStats(),
   ]);
+
+  const headline =
+    stats.jobs > 0
+      ? `${stats.jobs} open ${stats.jobs === 1 ? "role" : "roles"} in Crypto Valley`
+      : "Crypto jobs in Crypto Valley";
 
   return (
     <div>
@@ -39,99 +45,76 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
-      {/* Hero */}
-      <section className="border-b bg-gradient-to-b from-primary/5 via-primary/[0.02] to-background py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-4 text-center">
-          <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl lg:text-6xl">
-            Blockchain & Crypto Jobs
-            <br />
-            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">in Crypto Valley</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Find your next role at the leading blockchain companies in
-            Switzerland. From DeFi to infrastructure, Web3 to tokenization.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <Button asChild size="lg" className="rounded-xl px-8 shadow-md">
-              <Link href="/jobs">Browse Jobs</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="rounded-xl px-8">
-              <Link href="/post-job">Post a Job</Link>
-            </Button>
-          </div>
 
-          {/* Stats — "0 open positions" undersells the board, so hide when empty */}
-          {stats.jobs > 0 && (
-          <div className="mx-auto mt-12 flex items-center justify-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Briefcase className="size-4 text-primary/60" />
-              <span>
-                <span className="font-semibold text-foreground">
-                  {stats.jobs}
-                </span>{" "}
-                open {stats.jobs === 1 ? "position" : "positions"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Building2 className="size-4 text-primary/60" />
-              <span>
-                <span className="font-semibold text-foreground">
-                  {stats.companies}
-                </span>{" "}
-                {stats.companies === 1 ? "company" : "companies"} hiring
-              </span>
-            </div>
+      {/* Hero: the one loud thing on the site */}
+      <section className="bg-brand text-brand-foreground">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-10 pt-14 sm:pt-20 lg:grid-cols-12 lg:items-end lg:pb-12">
+          <h1 className="font-condensed text-[clamp(3.25rem,11vw,7.5rem)] font-extrabold leading-[0.88] tracking-[-0.015em] text-balance lg:col-span-8">
+            {headline}
+          </h1>
+          <div className="lg:col-span-4">
+            <p className="max-w-sm text-[17px] leading-relaxed">
+              Crypto and blockchain jobs in Switzerland, plus remote roles open
+              to people living here. Updated every morning.
+            </p>
+            <form action="/jobs" role="search" className="mt-5 flex max-w-md">
+              <input
+                name="q"
+                type="search"
+                placeholder="Role, company or city"
+                aria-label="Search jobs"
+                className="h-11 min-w-0 flex-1 rounded-l-sm bg-white px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              />
+              <button
+                type="submit"
+                className="h-11 rounded-r-sm bg-foreground px-5 text-[15px] font-medium text-background hover:bg-foreground/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Search
+              </button>
+            </form>
           </div>
-          )}
         </div>
       </section>
 
-      {/* Latest Jobs */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">Latest Jobs</h2>
-          <Link
-            href="/jobs"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            View all {stats.jobs > 0 ? `${stats.jobs} jobs` : "jobs"}
-            <ArrowRight className="size-3" />
-          </Link>
-        </div>
+      <section className="mx-auto max-w-6xl px-4 pb-16 pt-10">
         {jobs.length > 0 ? (
-          <div className="mt-6 flex flex-col gap-4">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+          <>
+            <JobList jobs={jobs} />
+            <p className="mt-6 text-[15px]">
+              <Link href="/jobs" className="font-medium underline underline-offset-4 hover:no-underline">
+                {stats.jobs > jobs.length
+                  ? `See all ${stats.jobs} jobs`
+                  : "Filter by job type or workplace"}
+              </Link>
+            </p>
+          </>
         ) : (
-          <div className="mt-8 rounded-lg border border-dashed px-4 py-12 text-center">
-            <Briefcase className="mx-auto size-8 text-muted-foreground/50" />
-            <p className="mt-3 font-medium">No open roles right now</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              New listings are added daily. Get them by email, or{" "}
-              <Link href="/post-job" className="underline underline-offset-4 hover:text-foreground">
+          <div className="border-y py-12">
+            <p className="text-lg font-semibold">No open roles today</p>
+            <p className="mt-1 max-w-md text-muted-foreground">
+              New roles are added every morning. Get them by email below, or{" "}
+              <Link href="/post-job" className="text-foreground underline underline-offset-4">
                 post a job
               </Link>
               .
             </p>
-            <EmailSubscribeForm className="mt-6 flex flex-col items-center" />
           </div>
         )}
       </section>
 
-      {/* Email Subscribe (the empty state above already includes the form) */}
-      {jobs.length > 0 && (
-      <section className="border-t bg-muted/40">
-        <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:py-20">
-          <h2 className="text-2xl font-bold tracking-tight">Get Job Alerts</h2>
-          <p className="mt-2 text-muted-foreground">
-            New crypto jobs in Switzerland, delivered to your inbox.
-          </p>
-          <EmailSubscribeForm className="mt-6 flex flex-col items-center" />
+      <section className="border-t">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-14 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-6">
+            <h2 className="font-condensed text-4xl font-extrabold leading-none tracking-[-0.01em]">
+              Get new roles by email
+            </h2>
+            <p className="mt-3 max-w-md text-muted-foreground">
+              One short email on mornings when new jobs are added.
+            </p>
+          </div>
+          <EmailSubscribeForm className="lg:col-span-6" />
         </div>
       </section>
-      )}
     </div>
   );
 }

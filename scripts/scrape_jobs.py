@@ -458,7 +458,14 @@ def favicon_logo(website: str | None) -> str | None:
 def get_or_create_company(name: str, website: str | None = None) -> dict:
     result = supabase.table("companies").select("*").ilike("name", name).execute()
     if result.data:
-        return result.data[0]
+        company = result.data[0]
+        # Companies created before logos were fetched automatically
+        if not company.get("logo_url") and (website or company.get("website")):
+            logo = favicon_logo(company.get("website") or website)
+            if logo:
+                supabase.table("companies").update({"logo_url": logo}).eq("id", company["id"]).execute()
+                company["logo_url"] = logo
+        return company
 
     result = (
         supabase.table("companies")
@@ -514,8 +521,10 @@ def insert_job(job: dict, company_id: str) -> None:
         "job_type": normalize_job_type(
             job.get("job_type") or job.get("job_type_hint")
         ),
+        # Fall back to the location text: Ashby often leaves workplaceType
+        # empty on jobs whose location reads "Remote - EMEA"
         "location_type": normalize_location_type(
-            job.get("location_type") or job.get("location_type_hint")
+            job.get("location_type") or job.get("location_type_hint") or job.get("location")
         ),
         "location": job.get("location"),
         "apply_url": job["apply_url"],

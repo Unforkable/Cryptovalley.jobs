@@ -1,47 +1,27 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/layout/logo";
 
 export function Footer() {
   return (
-    <footer className="border-t bg-muted/30">
-      <div className="mx-auto max-w-6xl px-4 py-12">
-        <div className="flex flex-col gap-8 sm:flex-row sm:justify-between">
-          <div>
-            <Link href="/" className="text-lg font-extrabold tracking-tight">
-              <span className="text-primary">Crypto</span>Valley<span className="text-muted-foreground">.jobs</span>
-            </Link>
-            <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-              The job board for blockchain and crypto companies in
-              Switzerland&apos;s Crypto Valley.
-            </p>
-          </div>
-
-          <div className="flex gap-16">
-            <div>
-              <h3 className="text-sm font-semibold">For Job Seekers</h3>
-              <nav className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
-                <Link href="/jobs" className="hover:text-foreground">
-                  Browse Jobs
-                </Link>
-                <Link href="/companies" className="hover:text-foreground">
-                  Companies
-                </Link>
-              </nav>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold">For Employers</h3>
-              <nav className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">
-                <Link href="/post-job" className="hover:text-foreground">
-                  Post a Job
-                </Link>
-              </nav>
-            </div>
-          </div>
+    <footer className="border-t">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-12">
+        <div className="sm:col-span-6">
+          <Link href="/" aria-label="CryptoValley.jobs home">
+            <Wordmark />
+          </Link>
+          <p className="mt-3 max-w-xs text-sm text-muted-foreground">
+            Crypto and blockchain jobs in Switzerland, checked against company
+            career pages every morning.
+          </p>
         </div>
-
-        <div className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} CryptoValley.jobs. All rights
-          reserved.
-        </div>
+        <nav aria-label="Footer" className="flex flex-col gap-2 text-sm sm:col-span-3">
+          <Link href="/jobs" className="hover:underline">All jobs</Link>
+          <Link href="/companies" className="hover:underline">Companies</Link>
+        </nav>
+        <nav aria-label="For employers" className="flex flex-col gap-2 text-sm sm:col-span-3">
+          <Link href="/post-job" className="hover:underline">Post a job</Link>
+          <span className="text-muted-foreground">&copy; {new Date().getFullYear()} CryptoValley.jobs</span>
+        </nav>
       </div>
     </footer>
   );
