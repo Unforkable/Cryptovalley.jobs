@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, ExternalLink, ArrowLeft } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CompanyLogo } from "@/components/companies/company-logo";
 import { Separator } from "@/components/ui/separator";
 import { JobCard } from "@/components/jobs/job-card";
 import { getCompanyBySlug, getJobsByCompany } from "@/lib/supabase/queries";
@@ -53,7 +53,6 @@ export default async function CompanyDetailPage({
   if (!company) notFound();
 
   const jobs = await getJobsByCompany(company.id);
-  const initials = company.name.slice(0, 2).toUpperCase();
 
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -89,14 +88,13 @@ export default async function CompanyDetailPage({
       </Link>
 
       <div className="flex items-start gap-6">
-        <Avatar className="size-16 shrink-0 rounded-lg">
-          {company.logo_url && (
-            <AvatarImage src={company.logo_url} alt={company.name} />
-          )}
-          <AvatarFallback className="rounded-lg text-lg">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        <CompanyLogo
+          name={company.name}
+          logoUrl={company.logo_url}
+          size="default"
+          className="size-16 shrink-0 rounded-lg"
+          fallbackClassName="rounded-lg text-lg"
+        />
         <div>
           <h1 className="text-3xl font-bold">{company.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">

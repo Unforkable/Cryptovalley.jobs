@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CompanyLogo } from "@/components/companies/company-logo";
 import { JobCard } from "@/components/jobs/job-card";
 import { EmailSubscribeForm } from "@/components/jobs/email-subscribe-form";
 import { getJobBySlug, getJobsByCompany } from "@/lib/supabase/queries";
@@ -201,7 +201,6 @@ export default async function JobDetailPage({
 
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const company = job.company;
-  const initials = company?.name?.slice(0, 2).toUpperCase() ?? "??";
   const expired = isJobExpired(job);
 
   const moreJobs = (await getJobsByCompany(job.company_id))
@@ -296,12 +295,7 @@ export default async function JobDetailPage({
         <aside>
           <Card className="sticky top-20 rounded-xl shadow-sm">
             <CardContent className="flex flex-col items-center text-center">
-              <Avatar size="lg" className="mb-3">
-                {company?.logo_url && (
-                  <AvatarImage src={company.logo_url} alt={company.name} />
-                )}
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
+              <CompanyLogo name={company?.name} logoUrl={company?.logo_url} className="mb-3" />
 
               {company && (
                 <>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MapPin, Briefcase, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CompanyLogo } from "@/components/companies/company-logo";
 import { cn } from "@/lib/utils";
 import type { Job } from "@/types";
 
@@ -36,7 +36,6 @@ function timeAgo(date: string) {
 
 export function JobCard({ job }: { job: Job }) {
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
-  const initials = job.company?.name?.slice(0, 2).toUpperCase() ?? "??";
   const place = shortLocation(job.location);
   // Skip "remote" as a second badge when the place already says it
   const showWorkplace = !(place && /remote/i.test(place) && job.location_type === "remote");
@@ -49,12 +48,11 @@ export function JobCard({ job }: { job: Job }) {
       )}
     >
       <CardContent className="flex gap-4">
-        <Avatar size="lg" className="mt-0.5 shrink-0">
-          {job.company?.logo_url && (
-            <AvatarImage src={job.company.logo_url} alt={job.company.name} />
-          )}
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+        <CompanyLogo
+          name={job.company?.name}
+          logoUrl={job.company?.logo_url}
+          className="mt-0.5 shrink-0"
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
